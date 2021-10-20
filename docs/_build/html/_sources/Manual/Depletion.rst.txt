@@ -53,7 +53,7 @@ and the corresponding :ref:`TransmutationData <predep>` objects that contain the
   
 .. code::
 
-	data = TransmutationData(timeframes, argv)
+	dep = MainDepletion(timeframes, argv)
 	
 where,
 
