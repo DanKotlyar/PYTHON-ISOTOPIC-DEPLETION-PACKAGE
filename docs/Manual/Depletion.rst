@@ -1,0 +1,333 @@
+.. _deplete:
+
+
+Depletion
+--------- 
+The ``MainDepletion`` class executes depletion and solves the Bateman equations.
+Depletion can be executed with transmutation and decay combined or
+be carried out for decay analysis only.
+The Bateman eqautions are a set of coupled linear ODEs.
+The default library uses a 1743 x 1743 matrix, according to which 1743 coupled ODEs are solved.
+
+The depletion is performed by assuming constant 1-group cross section
+values provided by the user through the :ref:`TransmutationData <predep>` object/s.
+
+The user can either provide the flux for each depletion interval or the power.
+If power is provided then the flux is calculated from solving for the isotopic
+concentration at different time-points and knowing the fission cross sections.
+
+
+In order to exectute depletion, the **following sub-stages** must be carried out sequentially:
+
+	* :ref:`Step-1-MainDepletion <step1>`
+		* Define the state time-points and the corersponding ``TransmutationData`` objects.
+	* :ref:`Step-2-SetDepScenario <step2>`
+		* Define the time and power/flux history scenario.
+	* :ref:`Step-3-SetInitialComposition <step3>`
+		* Set Initial isotopic compositions, and
+	* :ref:`Step-4-SolveDepletion <step4dep>` or :ref:`Step-4-SolveDecay <step4dep>`
+		* Solve the Bateman eqations (transmutation and/or decay).
+
+The Depletion package also contains :ref:`post-irradiation supplementary methods <step5sup>` that allow the user to calculate post-irradiation characterisitcs,
+such as acitivity, mass, decay heat, and radiotoxicity. The data is calculated for each isotope and is also provided as a sum.
+
+
+
+.. _step1:
+
+MainDepletion
+^^^^^^^^^^^^^
+
+This is the main depletion branch. The class is initialized by providing the time-points (states/frames)
+and the corresponding :ref:`TransmutationData <predep>` objects that contain the decay and transmutation data.
+
+
+**Load module**:
+
+.. code::
+
+	pyIsoDep.functions.maindepletionsolver import MainDepletion
+
+
+**Execution**:
+  
+.. code::
+
+	data = TransmutationData(timeframes, argv)
+	
+where,
+
+============= ==========================================
+Input					Description
+============= ==========================================
+timeframes	  Time points at which cross sections are generated. This could be an array, list or a number. Must be provided without the ``timeframes`` argument; only the value/s must be provided, e.g., [0.0, 20.0, 1000.]
+------------- ------------------------------------------
+argv	      	Unspecified number of :ref:`TransmutationData <predep>` objects.
+============= ==========================================
+
+.. Note::
+
+	* The number of ``TransmutationData`` objects must correspond to the length of ``timeframes``. 
+	* No arguments can be passed to the function; only the values must be provided.
+	* The units of the ``timeframes`` should be identical to the ones set in the :ref:`SetDepScenario <step2>`
+
+  
+**Examples:**
+
+* For a single ``TransmutationData`` object:
+
+.. code::
+
+	data1 = TransmutationData(wgtFY=0.5)
+	dep = MainDepletion(0.0, data)
+	
+	
+* For multiple ``TransmutationData`` objects:
+
+.. code::
+
+	data1 = TransmutationData(wgtFY=0.0)
+	data1.ReadData([922350, 922380], sig_f=[40.0, 1.5], sig_c=[8, 3.])
+	data2 = TransmutationData(wgtFY=0.0)
+	data2.ReadData([922350, 922380], sig_f=[38.0, 1.3], sig_c=[7.9, 2.6])
+	dep = MainDepletion([0.0, 50.0], data1, data2)
+
+
+
+
+.. _step2:
+
+SetDepScenario
+^^^^^^^^^^^^^^
+
+A method to define a depletion or decay scenario.
+The history of the scenario must be provided.
+
+The user must provide either the flux or the power.
+If the latter is provided then the program calculates the flux on-the-fly from knowing the power and the fission energy and cross section.
+
+``MainDepletion`` must be defined before calling this method.
+
+
+**Execution**:
+  
+.. code::
+
+	dep = MainDepletion(0.0, data)
+	dep.SetDepScenario(power, flux, timeUnits, timesteps, timepoints)
+	
+where,
+
+============= ==========================================
+Input					Description
+============= ==========================================
+power				  Absolute power for each depletion time-step in Watts
+------------- ------------------------------------------
+flux				  Absolute flux for each depletion step in n/cm**2/s
+------------- ------------------------------------------
+timeUnits			Time units string in "seconds", "minutes", "hours", or "days"
+------------- ------------------------------------------
+timesteps			Depletion time-steps/intervals in ``timeUnits``
+------------- ------------------------------------------
+timepoints	  Depletion time-points in ``timeUnits``
+============= ==========================================
+
+.. Note::
+
+	* Either ``power`` or ``flux`` must be provided. Must be provided as an array or list. If any is provided they are all reset to zero. If both are provided the power will be used and the flux will be overwritten.
+	* Either ``timesteps`` or ``timepoints`` must be provided. If both are provided then ``timepoints`` will be overwritten using the time-steps.	
+	* The length of the flux/power arrays must be identical to the length of the time-steps. The length of the time-points will be larger by one.
+	* The units chosen in the ``timeUnits`` must be compatible with the ``timeframes`` defined in  :ref:`Step-1- <step1>`.
+
+  
+**Examples:**
+
+* Using absolute powers and time-steps:
+
+.. code::
+
+	dep = MainDepletion(timeframes, data)
+	dep.SetDepScenario(power=[1E+6, 0.0], timeUnits="hours", timesteps=[10., 10.])
+
+	
+* Using absolute powers and equivalent time-points:
+
+.. code::
+
+	dep = MainDepletion(0.0, data)
+	dep.SetDepScenario(power=[1E+6, 0.0], timeUnits="hours", timepoints=[0.0, 10., 30.])
+
+* Using absolute flux and equivalent time-points:
+
+.. code::
+
+	dep = MainDepletion(0.0, data)
+	dep.SetDepScenario(flux=[1E+15, 0.0], timeUnits="hours", timepoints=[0.0, 10., 30.])
+	
+
+.. _step3:
+
+SetInitialComposition
+^^^^^^^^^^^^^^^^^^^^^
+
+Set initial isotopic composition.
+
+**Execution**:
+  
+.. code::
+
+	dep = MainDepletion(timeframes, data)
+	dep.SetInitialComposition(ID, N0, vol)
+	
+where,
+
+============= ==========================================
+Input					Description
+============= ==========================================
+ID				  	Identification of isotopes following the ZZAAA0/1 format
+------------- ------------------------------------------
+N0				  	Initial isotopic (correponsing to IDs) concentrations in #/cm/b
+------------- ------------------------------------------
+vol						Volume of the system in cm**3. Volume is needed if total absolute values are required (e.g., radiotoxicity).
+============= ==========================================
+
+.. Note::
+
+	* ``ID``, ``N0`` must either be a list- or array-type. They cannot contain negative values.
+	* The nuclide densities within ``N0`` must follow the indices of the ``ID``. The length of both arrays must be identical.
+	* The volume is not used in solving the Bateman equations. In that respect, the units for ``N0`` can be arbitrary, but it is suggested to use ``#/cm/b`` for consistency.	
+
+  
+**Examples:**
+
+* Using absolute powers and time-steps:
+
+.. code::
+
+	dep.SetInitialComposition([541350, 922350], [0.0, 0.021])
+
+
+
+.. _step4dep:
+
+SolveDepletion
+^^^^^^^^^^^^^^
+
+Solve the Bateman equations that include transmutation and decay
+
+**Execution**:
+  
+.. code::
+
+	dep = MainDepletion(timeframes, data)
+	dep.SolveDepletion(method, xsinterp)
+	
+where,
+
+============= ==========================================
+Input					Description
+============= ==========================================
+method				Method {"cram", "expm", "odeint"} used to solve the Bateman equations
+------------- ------------------------------------------
+xsinterp			Flag to indicate whether interpolation in between timesteps is allowed to be performed for the transmutation data.
+============= ==========================================
+
+.. Note::
+
+	* ``xsinterp`` allows to interpolate transmutation data used in the depletion calculations. The actual time-point is known during the simulation, and is used within the analysis in conjuction with the ``timeframes`` to obtain interpolated values for all the transmutation data.
+	* No extrapolation is allowed here. If the actual time-point is outside the range of ``timeframes``, the cross sections are going be fixed to the cross section set correponsing to the nearest bound of the timeframes. For example, if ``timeframes=[0.0, 50., 100]`` and the actual ``time-point=150``, then transmutation data correspondidng to ``timeframes=100`` will be used. 
+	* The current CRAM method implements Chebyshev approximation of type (14,14), but future versions will include higher-precision approximations. A short description of the different methods to solve the Bateman equations is provided in the table below:
+
+============= ==========================================
+Method					Description
+============= ==========================================
+CRAM						Computes the direct action of the matrix exponential on a vector: :math:`N_1 = e^A N_0`. It uses the partial fraction expansion of the uniform rational Chebyshev approximation of type (14,14). About 14-digit accuracy is expected if the matrix A is symmetric negative definite. The algorithm may behave poorly otherwise.
+------------- ------------------------------------------
+EXPM						Compute the matrix exponential using Pade approximation (built-in python function)
+------------- ------------------------------------------
+ODEINT					Integrate a system of ordinary differential equations using a built-in odeint pyhton solver.
+============= ==========================================
+
+
+
+**Examples:**
+
+* Using the ``cram`` method.
+
+.. code::
+
+	dep.SolveDepletion("cram")
+
+
+
+.. _step4dec:
+
+SolveDecay
+^^^^^^^^^^
+
+Solve the Bateman equations with only the decay chains.
+
+**Execution**:
+  
+.. code::
+
+	dep = MainDepletion(timeframes, data)
+	dep.SolveDecay(method)
+	
+where,
+
+============= ==========================================
+Input					Description
+============= ==========================================
+method				Method {"cram", "expm", "odeint"} used to solve the Bateman equations
+============= ==========================================
+
+.. Note::
+
+	* This function operates identically the same as the :ref:`Step-4-SolveDepletion <step4dep>`, but expects no transmutation to be defined.
+	* This method is equivalent to :ref:`Step-4-SolveDepletion <step4dep>` when the power/flux are defined to be identically zero.
+
+* Using the ``expm`` method.
+
+.. code::
+
+	dep.SolveDepletion("expm")
+	
+	
+.. _step5sup:
+
+Supplementary Functions
+^^^^^^^^^^^^^^^^^^^^^^^
+
+There are a number of **post-irradiation supplementary methods** embedded here and listed in the table below:
+
+
+============= ==========================================
+Method				Description
+============= ==========================================
+Activity			Calculate isotopic and total actitvity in Cuire
+------------- ------------------------------------------
+Mass					Calculate isotopic and total masses in grams
+------------- ------------------------------------------
+Radiotoxicity	Calculate isotopic and total radiotoxicity in Sv
+------------- ------------------------------------------
+DecayHeat			Calculate isotopic and total decay heat in Watts
+============= ==========================================
+
+.. Note::
+
+	* These methods can be executed only after the ``SolveDepletion`` or ``SolveDecay`` are applied.
+	* If the pre-generated library or user defined data do not contain atomic weights, decay constants, radiotoxicity, or decay heat coefficients, these supplementary methods should throw an error alerting of any missing information.
+	* Following execution of a specific method, the data will be saved directly on the ``MainDepletion`` container.
+
+**Execution**:
+  
+.. code::
+
+	dep = MainDepletion(timeframes, data)
+	dep.SolveDecay(method)
+	dep.Activity()
+	dep.Mass()
+	dep.Radiotoxicity()
+	dep.DecayHeat()
+	

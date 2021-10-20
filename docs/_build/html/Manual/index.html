@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User’s Manual &#8212; pyIsoDep 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Data Generation" href="Datageneration.html" />
+    <link rel="prev" title="Developer Team" href="../contributors.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="user-s-manual">
+<span id="user-manual"></span><h1>User’s Manual<a class="headerlink" href="#user-s-manual" title="Permalink to this headline">¶</a></h1>
+<p>The User's Manual for the <code class="docutils literal notranslate"><span class="pre">pyIsoDep</span></code> package describes how
+to use the code and its various transmutation and decay applications.</p>
+<div class="section" id="execution-sequence">
+<h2>Execution Sequence<a class="headerlink" href="#execution-sequence" title="Permalink to this headline">¶</a></h2>
+<p>The following sequence describes all the stages required to
+perform a transmutation and/or decay simulation.</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p><a class="reference internal" href="Datageneration.html#datagen"><span class="std std-ref">Decay and transmutation data generation</span></a>: define a single or multiple <code class="docutils literal notranslate"><span class="pre">TransmutationData</span></code> containers.</p></li>
+<li><p><a class="reference internal" href="Depletion.html#deplete"><span class="std std-ref">Execute depletion</span></a>: set depletion or decay history, and solve the Bateman equations.</p></li>
+<li><p><a class="reference internal" href="Postprocess.html#postprocess"><span class="std std-ref">Post-process results</span></a>: a dedicated container to store only result attributes, and methods to obtain specific values and plot results.</p></li>
+</ol>
+</div></blockquote>
+<div class="section" id="description-of-stored-data">
+<h3>Description of Stored Data<a class="headerlink" href="#description-of-stored-data" title="Permalink to this headline">¶</a></h3>
+<p>Following a successive execution of each of the above stages, the containers will be populated with data unique to each container.
+The following sub-sections describe the data stored on each container:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p><a class="reference internal" href="predepletion.html#predep"><span class="std std-ref">Pre- decay and transmutation data storage</span></a></p></li>
+<li><p><a class="reference internal" href="postdepletion.html#postdep"><span class="std std-ref">Post- decay and transmutation data storage</span></a></p></li>
+<li><p><a class="reference internal" href="resstorage.html#res"><span class="std std-ref">Results container</span></a></p></li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="abstract-example">
+<h3>Abstract Example<a class="headerlink" href="#abstract-example" title="Permalink to this headline">¶</a></h3>
+<p><strong>Data generation</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">TransmutationData</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">data</span><span class="o">.</span><span class="n">ReadData</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Calling Depletion</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SetDepScenario</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SetInitialComposition</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SolveDepletion</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;cram&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Post-process results</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="n">Results</span><span class="p">(</span><span class="n">dep</span><span class="p">)</span>
+<span class="n">res</span><span class="o">.</span><span class="n">getvalues</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">res</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyIsoDep</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Project Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributors.html">Developer Team</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">User’s Manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../develop/index.html">Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../contributors.html" title="previous chapter">Developer Team</a></li>
+      <li>Next: <a href="Datageneration.html" title="next chapter">Data Generation</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Dan Kotlyar.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/Manual/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

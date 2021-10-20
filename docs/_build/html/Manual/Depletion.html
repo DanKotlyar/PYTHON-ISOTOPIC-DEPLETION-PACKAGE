@@ -1,0 +1,494 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depletion &#8212; pyIsoDep 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Post-process" href="Postprocess.html" />
+    <link rel="prev" title="Data Generation" href="Datageneration.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="depletion">
+<span id="deplete"></span><h1>Depletion<a class="headerlink" href="#depletion" title="Permalink to this headline">¶</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">MainDepletion</span></code> class executes depletion and solves the Bateman equations.
+Depletion can be executed with transmutation and decay combined or
+be carried out for decay analysis only.
+The Bateman eqautions are a set of coupled linear ODEs.
+The default library uses a 1743 x 1743 matrix, according to which 1743 coupled ODEs are solved.</p>
+<p>The depletion is performed by assuming constant 1-group cross section
+values provided by the user through the <a class="reference internal" href="predepletion.html#predep"><span class="std std-ref">TransmutationData</span></a> object/s.</p>
+<p>The user can either provide the flux for each depletion interval or the power.
+If power is provided then the flux is calculated from solving for the isotopic
+concentration at different time-points and knowing the fission cross sections.</p>
+<p>In order to exectute depletion, the <strong>following sub-stages</strong> must be carried out sequentially:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="simple">
+<dt><a class="reference internal" href="#step1"><span class="std std-ref">Step-1-MainDepletion</span></a></dt><dd><ul>
+<li><p>Define the state time-points and the corersponding <code class="docutils literal notranslate"><span class="pre">TransmutationData</span></code> objects.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a class="reference internal" href="#step2"><span class="std std-ref">Step-2-SetDepScenario</span></a></dt><dd><ul>
+<li><p>Define the time and power/flux history scenario.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a class="reference internal" href="#step3"><span class="std std-ref">Step-3-SetInitialComposition</span></a></dt><dd><ul>
+<li><p>Set Initial isotopic compositions, and</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a class="reference internal" href="#step4dep"><span class="std std-ref">Step-4-SolveDepletion</span></a> or <a class="reference internal" href="#step4dep"><span class="std std-ref">Step-4-SolveDecay</span></a></dt><dd><ul>
+<li><p>Solve the Bateman eqations (transmutation and/or decay).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<p>The Depletion package also contains <a class="reference internal" href="#step5sup"><span class="std std-ref">post-irradiation supplementary methods</span></a> that allow the user to calculate post-irradiation characterisitcs,
+such as acitivity, mass, decay heat, and radiotoxicity. The data is calculated for each isotope and is also provided as a sum.</p>
+<div class="section" id="maindepletion">
+<span id="step1"></span><h2>MainDepletion<a class="headerlink" href="#maindepletion" title="Permalink to this headline">¶</a></h2>
+<p>This is the main depletion branch. The class is initialized by providing the time-points (states/frames)
+and the corresponding <a class="reference internal" href="predepletion.html#predep"><span class="std std-ref">TransmutationData</span></a> objects that contain the decay and transmutation data.</p>
+<p><strong>Load module</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pyIsoDep</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">maindepletionsolver</span> <span class="kn">import</span> <span class="nn">MainDepletion</span>
+</pre></div>
+</div>
+<p><strong>Execution</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">TransmutationData</span><span class="p">(</span><span class="n">timeframes</span><span class="p">,</span> <span class="n">argv</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where,</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 6%" />
+<col style="width: 94%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Input</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>timeframes</p></td>
+<td><p>Time points at which cross sections are generated. This could be an array, list or a number. Must be provided without the <code class="docutils literal notranslate"><span class="pre">timeframes</span></code> argument; only the value/s must be provided, e.g., [0.0, 20.0, 1000.]</p></td>
+</tr>
+<tr class="row-odd"><td><p>argv</p></td>
+<td><p>Unspecified number of <a class="reference internal" href="predepletion.html#predep"><span class="std std-ref">TransmutationData</span></a> objects.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>The number of <code class="docutils literal notranslate"><span class="pre">TransmutationData</span></code> objects must correspond to the length of <code class="docutils literal notranslate"><span class="pre">timeframes</span></code>.</p></li>
+<li><p>No arguments can be passed to the function; only the values must be provided.</p></li>
+<li><p>The units of the <code class="docutils literal notranslate"><span class="pre">timeframes</span></code> should be identical to the ones set in the <a class="reference internal" href="#step2"><span class="std std-ref">SetDepScenario</span></a></p></li>
+</ul>
+</div>
+<p><strong>Examples:</strong></p>
+<ul class="simple">
+<li><p>For a single <code class="docutils literal notranslate"><span class="pre">TransmutationData</span></code> object:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data1</span> <span class="o">=</span> <span class="n">TransmutationData</span><span class="p">(</span><span class="n">wgtFY</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>For multiple <code class="docutils literal notranslate"><span class="pre">TransmutationData</span></code> objects:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data1</span> <span class="o">=</span> <span class="n">TransmutationData</span><span class="p">(</span><span class="n">wgtFY</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">data1</span><span class="o">.</span><span class="n">ReadData</span><span class="p">([</span><span class="mi">922350</span><span class="p">,</span> <span class="mi">922380</span><span class="p">],</span> <span class="n">sig_f</span><span class="o">=</span><span class="p">[</span><span class="mf">40.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span> <span class="n">sig_c</span><span class="o">=</span><span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mf">3.</span><span class="p">])</span>
+<span class="n">data2</span> <span class="o">=</span> <span class="n">TransmutationData</span><span class="p">(</span><span class="n">wgtFY</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">data2</span><span class="o">.</span><span class="n">ReadData</span><span class="p">([</span><span class="mi">922350</span><span class="p">,</span> <span class="mi">922380</span><span class="p">],</span> <span class="n">sig_f</span><span class="o">=</span><span class="p">[</span><span class="mf">38.0</span><span class="p">,</span> <span class="mf">1.3</span><span class="p">],</span> <span class="n">sig_c</span><span class="o">=</span><span class="p">[</span><span class="mf">7.9</span><span class="p">,</span> <span class="mf">2.6</span><span class="p">])</span>
+<span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">],</span> <span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="setdepscenario">
+<span id="step2"></span><h2>SetDepScenario<a class="headerlink" href="#setdepscenario" title="Permalink to this headline">¶</a></h2>
+<p>A method to define a depletion or decay scenario.
+The history of the scenario must be provided.</p>
+<p>The user must provide either the flux or the power.
+If the latter is provided then the program calculates the flux on-the-fly from knowing the power and the fission energy and cross section.</p>
+<p><code class="docutils literal notranslate"><span class="pre">MainDepletion</span></code> must be defined before calling this method.</p>
+<p><strong>Execution</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SetDepScenario</span><span class="p">(</span><span class="n">power</span><span class="p">,</span> <span class="n">flux</span><span class="p">,</span> <span class="n">timeUnits</span><span class="p">,</span> <span class="n">timesteps</span><span class="p">,</span> <span class="n">timepoints</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where,</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 86%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Input</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>power</p></td>
+<td><p>Absolute power for each depletion time-step in Watts</p></td>
+</tr>
+<tr class="row-odd"><td><p>flux</p></td>
+<td><p>Absolute flux for each depletion step in n/cm**2/s</p></td>
+</tr>
+<tr class="row-even"><td><p>timeUnits</p></td>
+<td><p>Time units string in “seconds”, “minutes”, “hours”, or “days”</p></td>
+</tr>
+<tr class="row-odd"><td><p>timesteps</p></td>
+<td><p>Depletion time-steps/intervals in <code class="docutils literal notranslate"><span class="pre">timeUnits</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>timepoints</p></td>
+<td><p>Depletion time-points in <code class="docutils literal notranslate"><span class="pre">timeUnits</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Either <code class="docutils literal notranslate"><span class="pre">power</span></code> or <code class="docutils literal notranslate"><span class="pre">flux</span></code> must be provided. Must be provided as an array or list. If any is provided they are all reset to zero. If both are provided the power will be used and the flux will be overwritten.</p></li>
+<li><p>Either <code class="docutils literal notranslate"><span class="pre">timesteps</span></code> or <code class="docutils literal notranslate"><span class="pre">timepoints</span></code> must be provided. If both are provided then <code class="docutils literal notranslate"><span class="pre">timepoints</span></code> will be overwritten using the time-steps.</p></li>
+<li><p>The length of the flux/power arrays must be identical to the length of the time-steps. The length of the time-points will be larger by one.</p></li>
+<li><p>The units chosen in the <code class="docutils literal notranslate"><span class="pre">timeUnits</span></code> must be compatible with the <code class="docutils literal notranslate"><span class="pre">timeframes</span></code> defined in  <a class="reference internal" href="#step1"><span class="std std-ref">Step-1-</span></a>.</p></li>
+</ul>
+</div>
+<p><strong>Examples:</strong></p>
+<ul class="simple">
+<li><p>Using absolute powers and time-steps:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">(</span><span class="n">timeframes</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SetDepScenario</span><span class="p">(</span><span class="n">power</span><span class="o">=</span><span class="p">[</span><span class="mf">1E+6</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">timeUnits</span><span class="o">=</span><span class="s2">&quot;hours&quot;</span><span class="p">,</span> <span class="n">timesteps</span><span class="o">=</span><span class="p">[</span><span class="mf">10.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">])</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Using absolute powers and equivalent time-points:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SetDepScenario</span><span class="p">(</span><span class="n">power</span><span class="o">=</span><span class="p">[</span><span class="mf">1E+6</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">timeUnits</span><span class="o">=</span><span class="s2">&quot;hours&quot;</span><span class="p">,</span> <span class="n">timepoints</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.</span><span class="p">,</span> <span class="mf">30.</span><span class="p">])</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Using absolute flux and equivalent time-points:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SetDepScenario</span><span class="p">(</span><span class="n">flux</span><span class="o">=</span><span class="p">[</span><span class="mf">1E+15</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">timeUnits</span><span class="o">=</span><span class="s2">&quot;hours&quot;</span><span class="p">,</span> <span class="n">timepoints</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.</span><span class="p">,</span> <span class="mf">30.</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="setinitialcomposition">
+<span id="step3"></span><h2>SetInitialComposition<a class="headerlink" href="#setinitialcomposition" title="Permalink to this headline">¶</a></h2>
+<p>Set initial isotopic composition.</p>
+<p><strong>Execution</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">(</span><span class="n">timeframes</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SetInitialComposition</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span> <span class="n">N0</span><span class="p">,</span> <span class="n">vol</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where,</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 8%" />
+<col style="width: 92%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Input</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ID</p></td>
+<td><p>Identification of isotopes following the ZZAAA0/1 format</p></td>
+</tr>
+<tr class="row-odd"><td><p>N0</p></td>
+<td><p>Initial isotopic (correponsing to IDs) concentrations in #/cm/b</p></td>
+</tr>
+<tr class="row-even"><td><p>vol</p></td>
+<td><p>Volume of the system in cm**3. Volume is needed if total absolute values are required (e.g., radiotoxicity).</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ID</span></code>, <code class="docutils literal notranslate"><span class="pre">N0</span></code> must either be a list- or array-type. They cannot contain negative values.</p></li>
+<li><p>The nuclide densities within <code class="docutils literal notranslate"><span class="pre">N0</span></code> must follow the indices of the <code class="docutils literal notranslate"><span class="pre">ID</span></code>. The length of both arrays must be identical.</p></li>
+<li><p>The volume is not used in solving the Bateman equations. In that respect, the units for <code class="docutils literal notranslate"><span class="pre">N0</span></code> can be arbitrary, but it is suggested to use <code class="docutils literal notranslate"><span class="pre">#/cm/b</span></code> for consistency.</p></li>
+</ul>
+</div>
+<p><strong>Examples:</strong></p>
+<ul class="simple">
+<li><p>Using absolute powers and time-steps:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span><span class="o">.</span><span class="n">SetInitialComposition</span><span class="p">([</span><span class="mi">541350</span><span class="p">,</span> <span class="mi">922350</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.021</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="solvedepletion">
+<span id="step4dep"></span><h2>SolveDepletion<a class="headerlink" href="#solvedepletion" title="Permalink to this headline">¶</a></h2>
+<p>Solve the Bateman equations that include transmutation and decay</p>
+<p><strong>Execution</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">(</span><span class="n">timeframes</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SolveDepletion</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">xsinterp</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where,</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 9%" />
+<col style="width: 91%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Input</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>method</p></td>
+<td><p>Method {“cram”, “expm”, “odeint”} used to solve the Bateman equations</p></td>
+</tr>
+<tr class="row-odd"><td><p>xsinterp</p></td>
+<td><p>Flag to indicate whether interpolation in between timesteps is allowed to be performed for the transmutation data.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">xsinterp</span></code> allows to interpolate transmutation data used in the depletion calculations. The actual time-point is known during the simulation, and is used within the analysis in conjuction with the <code class="docutils literal notranslate"><span class="pre">timeframes</span></code> to obtain interpolated values for all the transmutation data.</p></li>
+<li><p>No extrapolation is allowed here. If the actual time-point is outside the range of <code class="docutils literal notranslate"><span class="pre">timeframes</span></code>, the cross sections are going be fixed to the cross section set correponsing to the nearest bound of the timeframes. For example, if <code class="docutils literal notranslate"><span class="pre">timeframes=[0.0,</span> <span class="pre">50.,</span> <span class="pre">100]</span></code> and the actual <code class="docutils literal notranslate"><span class="pre">time-point=150</span></code>, then transmutation data correspondidng to <code class="docutils literal notranslate"><span class="pre">timeframes=100</span></code> will be used.</p></li>
+<li><p>The current CRAM method implements Chebyshev approximation of type (14,14), but future versions will include higher-precision approximations. A short description of the different methods to solve the Bateman equations is provided in the table below:</p></li>
+</ul>
+</div>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 4%" />
+<col style="width: 96%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>CRAM</p></td>
+<td><p>Computes the direct action of the matrix exponential on a vector: <span class="math notranslate nohighlight">\(N_1 = e^A N_0\)</span>. It uses the partial fraction expansion of the uniform rational Chebyshev approximation of type (14,14). About 14-digit accuracy is expected if the matrix A is symmetric negative definite. The algorithm may behave poorly otherwise.</p></td>
+</tr>
+<tr class="row-odd"><td><p>EXPM</p></td>
+<td><p>Compute the matrix exponential using Pade approximation (built-in python function)</p></td>
+</tr>
+<tr class="row-even"><td><p>ODEINT</p></td>
+<td><p>Integrate a system of ordinary differential equations using a built-in odeint pyhton solver.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples:</strong></p>
+<ul class="simple">
+<li><p>Using the <code class="docutils literal notranslate"><span class="pre">cram</span></code> method.</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span><span class="o">.</span><span class="n">SolveDepletion</span><span class="p">(</span><span class="s2">&quot;cram&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="solvedecay">
+<span id="step4dec"></span><h2>SolveDecay<a class="headerlink" href="#solvedecay" title="Permalink to this headline">¶</a></h2>
+<p>Solve the Bateman equations with only the decay chains.</p>
+<p><strong>Execution</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">(</span><span class="n">timeframes</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SolveDecay</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where,</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 87%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Input</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>method</p></td>
+<td><p>Method {“cram”, “expm”, “odeint”} used to solve the Bateman equations</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>This function operates identically the same as the <a class="reference internal" href="#step4dep"><span class="std std-ref">Step-4-SolveDepletion</span></a>, but expects no transmutation to be defined.</p></li>
+<li><p>This method is equivalent to <a class="reference internal" href="#step4dep"><span class="std std-ref">Step-4-SolveDepletion</span></a> when the power/flux are defined to be identically zero.</p></li>
+</ul>
+</div>
+<ul class="simple">
+<li><p>Using the <code class="docutils literal notranslate"><span class="pre">expm</span></code> method.</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span><span class="o">.</span><span class="n">SolveDepletion</span><span class="p">(</span><span class="s2">&quot;expm&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="supplementary-functions">
+<span id="step5sup"></span><h2>Supplementary Functions<a class="headerlink" href="#supplementary-functions" title="Permalink to this headline">¶</a></h2>
+<p>There are a number of <strong>post-irradiation supplementary methods</strong> embedded here and listed in the table below:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 84%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Activity</p></td>
+<td><p>Calculate isotopic and total actitvity in Cuire</p></td>
+</tr>
+<tr class="row-odd"><td><p>Mass</p></td>
+<td><p>Calculate isotopic and total masses in grams</p></td>
+</tr>
+<tr class="row-even"><td><p>Radiotoxicity</p></td>
+<td><p>Calculate isotopic and total radiotoxicity in Sv</p></td>
+</tr>
+<tr class="row-odd"><td><p>DecayHeat</p></td>
+<td><p>Calculate isotopic and total decay heat in Watts</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>These methods can be executed only after the <code class="docutils literal notranslate"><span class="pre">SolveDepletion</span></code> or <code class="docutils literal notranslate"><span class="pre">SolveDecay</span></code> are applied.</p></li>
+<li><p>If the pre-generated library or user defined data do not contain atomic weights, decay constants, radiotoxicity, or decay heat coefficients, these supplementary methods should throw an error alerting of any missing information.</p></li>
+<li><p>Following execution of a specific method, the data will be saved directly on the <code class="docutils literal notranslate"><span class="pre">MainDepletion</span></code> container.</p></li>
+</ul>
+</div>
+<p><strong>Execution</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">(</span><span class="n">timeframes</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SolveDecay</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">Activity</span><span class="p">()</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">Mass</span><span class="p">()</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">Radiotoxicity</span><span class="p">()</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">DecayHeat</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyIsoDep</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Project Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributors.html">Developer Team</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User’s Manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../develop/index.html">Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">User’s Manual</a><ul>
+      <li>Previous: <a href="Datageneration.html" title="previous chapter">Data Generation</a></li>
+      <li>Next: <a href="Postprocess.html" title="next chapter">Post-process</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Dan Kotlyar.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/Manual/Depletion.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

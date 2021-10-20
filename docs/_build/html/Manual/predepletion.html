@@ -1,0 +1,253 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Stored on TransmutationData &#8212; pyIsoDep 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Data Stored on MainDepletion" href="postdepletion.html" />
+    <link rel="prev" title="Post-process" href="Postprocess.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="data-stored-on-transmutationdata">
+<span id="predep"></span><h1>Data Stored on <code class="docutils literal notranslate"><span class="pre">TransmutationData</span></code><a class="headerlink" href="#data-stored-on-transmutationdata" title="Permalink to this headline">¶</a></h1>
+<p>The following complete list of <strong>attributes</strong> are stored on the object:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 84%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>fullId</p></td>
+<td><p>Full ZAID list</p></td>
+</tr>
+<tr class="row-odd"><td><p>nIsotopes</p></td>
+<td><p>Number of isotopes</p></td>
+</tr>
+<tr class="row-even"><td><p>AW</p></td>
+<td><p>Atomic weight</p></td>
+</tr>
+<tr class="row-odd"><td><p>Q</p></td>
+<td><p>Decay heat in W/Bq</p></td>
+</tr>
+<tr class="row-even"><td><p>BR</p></td>
+<td><p>Branching ratios leading to isomeric</p></td>
+</tr>
+<tr class="row-odd"><td><p>lmbda</p></td>
+<td><p>Decay constant in 1/s</p></td>
+</tr>
+<tr class="row-even"><td><p>decaymtx</p></td>
+<td><p>Decay matrix</p></td>
+</tr>
+<tr class="row-odd"><td><p>ingestion</p></td>
+<td><p>Ingestion coefficients in Sv/Bq</p></td>
+</tr>
+<tr class="row-even"><td><p>inhalation</p></td>
+<td><p>Inhalation coefficients in Sv/Bq</p></td>
+</tr>
+<tr class="row-odd"><td><p>fymtx</p></td>
+<td><p>Fission yields matrix</p></td>
+</tr>
+<tr class="row-even"><td><p>EfissMeV</p></td>
+<td><p>Energy per fission in MeV</p></td>
+</tr>
+<tr class="row-odd"><td><p>EfissJoule</p></td>
+<td><p>Energy per fission in Joules</p></td>
+</tr>
+<tr class="row-even"><td><p>xsData</p></td>
+<td><p>Cross section data matrix</p></td>
+</tr>
+<tr class="row-odd"><td><p>transmutationmtx</p></td>
+<td><p>Transmutation matrix without decay</p></td>
+</tr>
+<tr class="row-even"><td><p>libraryFlag</p></td>
+<td><p>True if a pre-generated library is used</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>The cross section columns provided in the <code class="docutils literal notranslate"><span class="pre">xsData</span></code> follows the structure given in the table below.</p></li>
+<li><p>Not all the attributes must be defined. For example in cases with only decay analysis, the cross section data might not apprear.</p></li>
+<li><p>Some data may be omitted if external libraries are used or the user does not provide a complete set of data (i.e., no ingestion coefficients). The analysis can still be conducted, but in this case the user will not be able to evaluate the radiotoxicity post-irradiation.</p></li>
+</ul>
+</div>
+<p>Description of the <code class="docutils literal notranslate"><span class="pre">xsData</span></code> attribute:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 86%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>Parameter description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>ZAID of the isotope (e.g., 541351)</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>Absorption cross section in cm2</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>Fission cross section in cm2</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>Capture to ground cross section in cm2</p></td>
+</tr>
+<tr class="row-even"><td><p>4</p></td>
+<td><p>Capture to isometic cross section in cm2</p></td>
+</tr>
+<tr class="row-odd"><td><p>5</p></td>
+<td><p>(n, 2n) cross section in cm2</p></td>
+</tr>
+<tr class="row-even"><td><p>6</p></td>
+<td><p>(n, 3n) cross section in cm2</p></td>
+</tr>
+<tr class="row-odd"><td><p>7</p></td>
+<td><p>(n, alpha) cross section in cm2</p></td>
+</tr>
+<tr class="row-even"><td><p>8</p></td>
+<td><p>(n, proton) cross section in cm2</p></td>
+</tr>
+<tr class="row-odd"><td><p>9</p></td>
+<td><p>(n, deuterium) cross section in cm2</p></td>
+</tr>
+<tr class="row-even"><td><p>10</p></td>
+<td><p>(n, tritium) cross section in cm2</p></td>
+</tr>
+</tbody>
+</table>
+<p>The following <strong>methods</strong> are stored on the object:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 88%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ReadData</p></td>
+<td><p>Read cross sections, decay, and fission yields data</p></td>
+</tr>
+<tr class="row-odd"><td><p>Condense</p></td>
+<td><p>Filter the transmutation chains and leave only the data correponding to a specific list of isotopes.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyIsoDep</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Project Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributors.html">Developer Team</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User’s Manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../develop/index.html">Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">User’s Manual</a><ul>
+      <li>Previous: <a href="Postprocess.html" title="previous chapter">Post-process</a></li>
+      <li>Next: <a href="postdepletion.html" title="next chapter">Data Stored on <code class="docutils literal notranslate"><span class="pre">MainDepletion</span></code></a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Dan Kotlyar.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/Manual/predepletion.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

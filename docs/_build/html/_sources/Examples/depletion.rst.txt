@@ -1,0 +1,11 @@
+.. _fulldep:
+
+
+Post-process
+------------ 
+
+1. User can use a built-in library to read decay data, fission yields, and branchin ratios.
+2. If only decay analysis is to be performed, no transmutation data needs to be provided.		
+3. The user can filter the isotopes for which BBateman eqautions are solved.
+
+

@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A scenario with multiple cross section sets &#8212; pyIsoDep 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Custom Xenon and Samarium Chains" href="custom_xenon_samarium.html" />
+    <link rel="prev" title="Decay Case" href="decay.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="a-scenario-with-multiple-cross-section-sets">
+<span id="multiplexs-example"></span><h1>A scenario with multiple cross section sets<a class="headerlink" href="#a-scenario-with-multiple-cross-section-sets" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="description">
+<h2>Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<p>Example on how to execute a full depletion calculations.</p>
+</div>
+<div class="section" id="load-modules">
+<h2>Load modules<a class="headerlink" href="#load-modules" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">pyIsoDep.functions.maindepletionsolver</span> <span class="kn">import</span> <span class="n">MainDepletion</span>
+<span class="kn">from</span> <span class="nn">pyIsoDep.functions.generatedata</span> <span class="kn">import</span> <span class="n">TransmutationData</span>
+<span class="kn">from</span> <span class="nn">pyIsoDep.functions.postprocessresults</span> <span class="kn">import</span> <span class="n">Results</span>
+<span class="kn">from</span> <span class="nn">pyIsoDep.functions.read_csv</span> <span class="kn">import</span> <span class="n">ReadCsv</span>
+</pre></div>
+</div>
+<div class="section" id="data-generation-stage">
+<h3>Data Generation Stage<a class="headerlink" href="#data-generation-stage" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">FY_WGT</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># determines the fission yield wieghting</span>
+<span class="n">VOL</span> <span class="o">=</span> <span class="mf">332097.8</span>  <span class="c1"># cm^3</span>
+
+<span class="n">xsTable</span><span class="p">,</span> <span class="n">fields</span> <span class="o">=</span> <span class="n">ReadCsv</span><span class="p">(</span><span class="s2">&quot;./bootstrap.csv&quot;</span><span class="p">)</span>
+<span class="n">bootstrap</span> <span class="o">=</span> <span class="n">TransmutationData</span><span class="p">(</span><span class="n">libraryFlag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">wgtFY</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">bootstrap</span><span class="o">.</span><span class="n">ReadData</span><span class="p">(</span><span class="n">ID</span><span class="o">=</span><span class="n">xsTable</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">sig_f</span><span class="o">=</span><span class="n">xsTable</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">sig_c</span><span class="o">=</span><span class="n">xsTable</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span>
+                   <span class="n">sig_alpha</span><span class="o">=</span><span class="n">xsTable</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">],</span> <span class="n">flagBarns</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">xsTable</span><span class="p">,</span> <span class="n">fields</span> <span class="o">=</span> <span class="n">ReadCsv</span><span class="p">(</span><span class="s2">&quot;./tempramp.csv&quot;</span><span class="p">)</span>
+<span class="n">tempramp</span> <span class="o">=</span> <span class="n">TransmutationData</span><span class="p">(</span><span class="n">libraryFlag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">wgtFY</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">tempramp</span><span class="o">.</span><span class="n">ReadData</span><span class="p">(</span><span class="n">ID</span><span class="o">=</span><span class="n">xsTable</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">sig_f</span><span class="o">=</span><span class="n">xsTable</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">sig_c</span><span class="o">=</span><span class="n">xsTable</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span>
+                  <span class="n">sig_alpha</span><span class="o">=</span><span class="n">xsTable</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">],</span> <span class="n">flagBarns</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">xsTable</span><span class="p">,</span> <span class="n">fields</span> <span class="o">=</span> <span class="n">ReadCsv</span><span class="p">(</span><span class="s2">&quot;./fullthrust.csv&quot;</span><span class="p">)</span>
+<span class="n">fullthrust</span> <span class="o">=</span> <span class="n">TransmutationData</span><span class="p">(</span><span class="n">libraryFlag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">wgtFY</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">fullthrust</span><span class="o">.</span><span class="n">ReadData</span><span class="p">(</span><span class="n">ID</span><span class="o">=</span><span class="n">xsTable</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">sig_f</span><span class="o">=</span><span class="n">xsTable</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">sig_c</span><span class="o">=</span><span class="n">xsTable</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span>
+                    <span class="n">sig_alpha</span><span class="o">=</span><span class="n">xsTable</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">],</span> <span class="n">flagBarns</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="depletion-stage">
+<h3>Depletion Stage<a class="headerlink" href="#depletion-stage" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="execute-depletion">
+<h4>Execute Depletion<a class="headerlink" href="#execute-depletion" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">5.5</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">],</span> <span class="n">bootstrap</span><span class="p">,</span> <span class="n">tempramp</span><span class="p">,</span> <span class="n">fullthrust</span><span class="p">)</span>
+<span class="c1"># define metadata (steps, flux, and so on)</span>
+<span class="n">power</span> <span class="o">=</span> <span class="mf">1E+6</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">16.545</span><span class="p">,</span> <span class="mf">118.49</span><span class="p">,</span> <span class="mf">272.52</span><span class="p">,</span> <span class="mf">330.22</span><span class="p">,</span> <span class="mf">272.52</span><span class="p">,</span> <span class="mf">214.82</span><span class="p">,</span> <span class="mf">118.49</span><span class="p">])</span>
+<span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.5</span><span class="p">,</span> <span class="mf">24.5</span><span class="p">,</span> <span class="mf">7.</span><span class="p">,</span> <span class="mf">1800.</span><span class="p">,</span> <span class="mf">7.</span><span class="p">,</span> <span class="mf">180.</span><span class="p">,</span> <span class="mf">40.</span><span class="p">])</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SetDepScenario</span><span class="p">(</span><span class="n">power</span><span class="o">=</span><span class="n">power</span><span class="p">,</span> <span class="n">timeUnits</span><span class="o">=</span><span class="s2">&quot;seconds&quot;</span><span class="p">,</span> <span class="n">timesteps</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
+<span class="c1"># set initial composition</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SetInitialComposition</span><span class="p">(</span><span class="n">xsTable</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">xsTable</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">vol</span><span class="o">=</span><span class="n">VOL</span><span class="p">)</span>
+<span class="c1"># solve the Bateman equations</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SolveDepletion</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;cram&quot;</span><span class="p">,</span> <span class="n">xsinterp</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="post-depletion-analysis">
+<h4>Post depletion analysis<a class="headerlink" href="#post-depletion-analysis" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span><span class="o">.</span><span class="n">DecayHeat</span><span class="p">()</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">Radiotoxicity</span><span class="p">()</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">Activity</span><span class="p">()</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">Mass</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="post-process-results">
+<h3>Post-process results<a class="headerlink" href="#post-process-results" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="n">Results</span><span class="p">(</span><span class="n">dep</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">getvalues</span><span class="p">(</span><span class="s2">&quot;totalQt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">array</span><span class="p">([</span><span class="mf">2.26062673e-03</span><span class="p">,</span> <span class="mf">2.31077846e+05</span><span class="p">,</span> <span class="mf">2.92441792e+06</span><span class="p">,</span> <span class="mf">5.53613244e+06</span><span class="p">,</span>
+       <span class="mf">1.57902852e+07</span><span class="p">,</span> <span class="mf">1.48928810e+07</span><span class="p">,</span> <span class="mf">1.16482768e+07</span><span class="p">,</span> <span class="mf">8.88484757e+06</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s2">&quot;Nt&quot;</span><span class="p">,</span> <span class="n">timeUnits</span><span class="o">=</span><span class="s2">&quot;seconds&quot;</span><span class="p">,</span> <span class="n">markers</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--^&#39;</span><span class="p">,</span> <span class="s1">&#39;--o&#39;</span><span class="p">],</span> <span class="n">isotopes</span><span class="o">=</span><span class="p">[</span><span class="mi">531350</span><span class="p">,</span> <span class="mi">922360</span><span class="p">],</span>
+         <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Atomic density, #/b/cm&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/multiple_xs_states_17_0.png" src="../_images/multiple_xs_states_17_0.png" />
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s2">&quot;totalQt&quot;</span><span class="p">,</span> <span class="n">timeUnits</span><span class="o">=</span><span class="s2">&quot;seconds&quot;</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="mf">1E+6</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Decay heat, MW&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/multiple_xs_states_18_0.png" src="../_images/multiple_xs_states_18_0.png" />
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s2">&quot;flux&quot;</span><span class="p">,</span> <span class="n">timeUnits</span><span class="o">=</span><span class="s2">&quot;seconds&quot;</span><span class="p">,</span> <span class="n">markers</span><span class="o">=</span><span class="s2">&quot;--ro&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Flux, n/cm2/s&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/multiple_xs_states_19_0.png" src="../_images/multiple_xs_states_19_0.png" />
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyIsoDep</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Project Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributors.html">Developer Team</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Manual/index.html">User’s Manual</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../develop/index.html">Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Examples</a><ul>
+      <li>Previous: <a href="decay.html" title="previous chapter">Decay Case</a></li>
+      <li>Next: <a href="custom_xenon_samarium.html" title="next chapter">Custom Xenon and Samarium Chains</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Dan Kotlyar.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/Examples/multiple_xs_states.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

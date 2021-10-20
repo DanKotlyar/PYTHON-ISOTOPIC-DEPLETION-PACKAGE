@@ -1,0 +1,295 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post-process &#8212; pyIsoDep 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Data Stored on TransmutationData" href="predepletion.html" />
+    <link rel="prev" title="Depletion" href="Depletion.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="post-process">
+<span id="postprocess"></span><h1>Post-process<a class="headerlink" href="#post-process" title="Permalink to this headline">¶</a></h1>
+<p>Basic post-processing capabilities to get specific values and plot results.
+Time-dependent data can be obtained for individual isotopes. Two methods are available:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 29%" />
+<col style="width: 71%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Input</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference internal" href="#getvalues"><span class="std std-ref">getvalues</span></a></p></td>
+<td><p>Obtain the values of a specific property</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#plot"><span class="std std-ref">plot</span></a></p></td>
+<td><p>Plot time-dependent results</p></td>
+</tr>
+</tbody>
+</table>
+<p>Before the post-processing class is applied, the user must execute a <a class="reference internal" href="Depletion.html#deplete"><span class="std std-ref">depletion scenario</span></a>
+and generate a <a class="reference internal" href="postdepletion.html#postdep"><span class="std std-ref">MainDepletion</span></a> object.</p>
+<p><strong>Load module</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pyIsoDep</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">postprocessresults</span> <span class="kn">import</span> <span class="nn">Results</span>
+</pre></div>
+</div>
+<p><strong>Execution</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="n">Results</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where,</p>
+<p><code class="docutils literal notranslate"><span class="pre">results</span></code> is the <a class="reference internal" href="postdepletion.html#postdep"><span class="std std-ref">MainDepletion</span></a> object.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">Results</span></code> will be very similar to the <a class="reference internal" href="postdepletion.html#postdep"><span class="std std-ref">MainDepletion</span></a> object, but will contain only the attributes (not the methods inherited from the <code class="docutils literal notranslate"><span class="pre">MainDepletion</span></code> object).</p></li>
+</ul>
+</div>
+<div class="section" id="getvalues">
+<span id="id1"></span><h2>getvalues<a class="headerlink" href="#getvalues" title="Permalink to this headline">¶</a></h2>
+<p>Obtain the values of a specific property</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">getvalues</span><span class="p">(</span><span class="n">attribute</span><span class="p">,</span> <span class="n">isotopes</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where,</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 87%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Input</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>attribute</p></td>
+<td><p>The name of the property (provided as a string)</p></td>
+</tr>
+<tr class="row-odd"><td><p>isotopes</p></td>
+<td><p>A list or array of isotopes provided in ZZAAA0/1 format (e.g., 541351)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>For the full list of attributes that can exist on the <code class="docutils literal notranslate"><span class="pre">Results</span></code> container, please see <a class="reference internal" href="resstorage.html#res"><span class="std std-ref">Results container</span></a>.</p></li>
+<li><p>If the <a class="reference internal" href="resstorage.html#res"><span class="std std-ref">post-irradiation supplementary methods</span></a> are not executed then some attributes will not exist on the <code class="docutils literal notranslate"><span class="pre">Results</span></code> object.</p></li>
+</ul>
+</div>
+<p><strong>Examples:</strong></p>
+<ul class="simple">
+<li><p>Isotopic density for a specific isotope:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">Results</span><span class="p">(</span><span class="n">dep</span><span class="p">)</span>
+<span class="n">res</span><span class="o">.</span><span class="n">getvalues</span><span class="p">(</span><span class="s2">&quot;Nt&quot;</span><span class="p">,</span> <span class="n">isotopes</span><span class="o">=</span><span class="p">[</span><span class="mi">541350</span><span class="p">])</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Decay heat in Watts for multiple isotopes:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">getvalues</span><span class="p">(</span><span class="s2">&quot;Qt&quot;</span><span class="p">,</span> <span class="n">isotopes</span><span class="o">=</span><span class="p">[</span><span class="mi">541350</span><span class="p">,</span> <span class="mi">942380</span><span class="p">])</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Material total values:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">getvalues</span><span class="p">(</span><span class="s2">&quot;totalQt&quot;</span><span class="p">,)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="plot">
+<span id="id2"></span><h2>plot<a class="headerlink" href="#plot" title="Permalink to this headline">¶</a></h2>
+<p>Plot time-dependent results.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">attribute</span><span class="p">,</span> <span class="n">timeUnits</span><span class="p">,</span> <span class="n">isotopes</span><span class="p">,</span> <span class="n">xlabel</span><span class="p">,</span> <span class="n">ylabel</span><span class="p">,</span> <span class="n">norm</span><span class="p">,</span> <span class="n">fontsize</span><span class="p">,</span> <span class="n">markers</span><span class="p">,</span> <span class="n">markerfill</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">pltType</span><span class="p">,</span> <span class="n">newFig</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where,</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 8%" />
+<col style="width: 92%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Input</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>attribute</p></td>
+<td><p>The name of the property (provided as a string)</p></td>
+</tr>
+<tr class="row-odd"><td><p>timeUnits</p></td>
+<td><p>String for the units to be used on the x-axis = {“seconds”, “minutes”, “hours”, “days”}</p></td>
+</tr>
+<tr class="row-even"><td><p>isotopes</p></td>
+<td><p>A list or array of isotopes provided in ZZAAA0/1 format (e.g., 541351)</p></td>
+</tr>
+<tr class="row-odd"><td><p>xlabel</p></td>
+<td><p>String for the x-axis label</p></td>
+</tr>
+<tr class="row-even"><td><p>ylabel</p></td>
+<td><p>String for the y-axis label</p></td>
+</tr>
+<tr class="row-odd"><td><p>norm</p></td>
+<td><p>Normalization factor. Should be provided as float. It is used to divide the desired results by the provided factor.</p></td>
+</tr>
+<tr class="row-even"><td><p>markers</p></td>
+<td><p>String of List of strings to represent markers. Default is “–^”</p></td>
+</tr>
+<tr class="row-odd"><td><p>markerfill</p></td>
+<td><p>Boolean flag to indicate whetehr marker fill should be removed. Default is <code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>markersize</p></td>
+<td><p>Float that represents the marker size.</p></td>
+</tr>
+<tr class="row-odd"><td><p>pltType</p></td>
+<td><p>String to represent a plot type: {“linear”, “loglog”, “semilogx”}. Default is “linear”</p></td>
+</tr>
+<tr class="row-even"><td><p>newFig</p></td>
+<td><p>Boolean flag to indicate whether a new figure should be created or an existing can be used. Default is <code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>For the full list of attributes that can exist on the <code class="docutils literal notranslate"><span class="pre">Results</span></code> container, please see <a class="reference internal" href="resstorage.html#res"><span class="std std-ref">Results container</span></a>.</p></li>
+<li><p>If the <a class="reference internal" href="resstorage.html#res"><span class="std std-ref">post-irradiation supplementary methods</span></a> are not executed then some attributes will not exist on the <code class="docutils literal notranslate"><span class="pre">Results</span></code> object.</p></li>
+</ul>
+</div>
+<p><strong>Examples:</strong></p>
+<ul class="simple">
+<li><p>Isotopic density for a specific isotope:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">Results</span><span class="p">(</span><span class="n">dep</span><span class="p">)</span>
+<span class="n">res</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s2">&quot;Nt&quot;</span><span class="p">,</span> <span class="n">isotopes</span><span class="o">=</span><span class="p">[</span><span class="mi">541350</span><span class="p">])</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Decay heat in Watts for multiple isotopes:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s2">&quot;Qt&quot;</span><span class="p">,</span> <span class="n">isotopes</span><span class="o">=</span><span class="p">[</span><span class="mi">531350</span><span class="p">,</span> <span class="mi">541350</span><span class="p">],</span> <span class="n">norm</span><span class="o">=</span><span class="mf">1E+6</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Total Decay Heat, MW&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Non-isotopic total values:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s2">&quot;flux&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Flux, n/cm2/s&quot;</span><span class="p">,</span> <span class="n">pltType</span><span class="o">=</span><span class="s2">&quot;semilogx&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyIsoDep</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Project Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributors.html">Developer Team</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User’s Manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../develop/index.html">Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">User’s Manual</a><ul>
+      <li>Previous: <a href="Depletion.html" title="previous chapter">Depletion</a></li>
+      <li>Next: <a href="predepletion.html" title="next chapter">Data Stored on <code class="docutils literal notranslate"><span class="pre">TransmutationData</span></code></a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Dan Kotlyar.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/Manual/Postprocess.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

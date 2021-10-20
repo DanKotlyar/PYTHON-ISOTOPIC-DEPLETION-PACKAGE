@@ -1,0 +1,251 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Stored on Results &#8212; pyIsoDep 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Examples" href="../Examples/index.html" />
+    <link rel="prev" title="Data Stored on MainDepletion" href="postdepletion.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="data-stored-on-results">
+<span id="res"></span><h1>Data Stored on <code class="docutils literal notranslate"><span class="pre">Results</span></code><a class="headerlink" href="#data-stored-on-results" title="Permalink to this headline">¶</a></h1>
+<p>The following complete list of <strong>attributes</strong> are stored on the object:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 15%" />
+<col style="width: 85%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>fullId</p></td>
+<td><p>Full ZAID list</p></td>
+</tr>
+<tr class="row-odd"><td><p>nIsotopes</p></td>
+<td><p>Number of isotopes</p></td>
+</tr>
+<tr class="row-even"><td><p>AW</p></td>
+<td><p>Atomic weight</p></td>
+</tr>
+<tr class="row-odd"><td><p>Q</p></td>
+<td><p>Decay heat in W/Bq</p></td>
+</tr>
+<tr class="row-even"><td><p>BR</p></td>
+<td><p>Branching ratios leading to isomeric</p></td>
+</tr>
+<tr class="row-odd"><td><p>lmbda</p></td>
+<td><p>Decay constant in 1/s</p></td>
+</tr>
+<tr class="row-even"><td><p>decaymtx</p></td>
+<td><p>Decay matrix</p></td>
+</tr>
+<tr class="row-odd"><td><p>ingestion</p></td>
+<td><p>Ingestion coefficients in Sv/Bq</p></td>
+</tr>
+<tr class="row-even"><td><p>inhalation</p></td>
+<td><p>Inhalation coefficients in Sv/Bq</p></td>
+</tr>
+<tr class="row-odd"><td><p>providedID</p></td>
+<td><p>User-provided IDs</p></td>
+</tr>
+<tr class="row-even"><td><p>providedN0</p></td>
+<td><p>User-provided number densities in #/b/cm</p></td>
+</tr>
+<tr class="row-odd"><td><p>volume</p></td>
+<td><p>Volume of the system in cm3</p></td>
+</tr>
+<tr class="row-even"><td><p>usertimesteps</p></td>
+<td><p>User-defined time-steps in the original units</p></td>
+</tr>
+<tr class="row-odd"><td><p>timepoints</p></td>
+<td><p>Time-points in seconds</p></td>
+</tr>
+<tr class="row-even"><td><p>timesteps</p></td>
+<td><p>Time-steps in seconds</p></td>
+</tr>
+<tr class="row-odd"><td><p>N0</p></td>
+<td><p>Nuclide densities in #/b/cm at t=t0</p></td>
+</tr>
+<tr class="row-even"><td><p>Nt</p></td>
+<td><p>Nuclide densities in #/b/cm for all the time-points</p></td>
+</tr>
+<tr class="row-odd"><td><p>At</p></td>
+<td><p>Isotopic activity in Bq for all the time-points</p></td>
+</tr>
+<tr class="row-even"><td><p>AtCuire</p></td>
+<td><p>Isotopic activity in Curie for all the time-points</p></td>
+</tr>
+<tr class="row-odd"><td><p>Qt</p></td>
+<td><p>Isotopic decay heat in Watts for all the time-points</p></td>
+</tr>
+<tr class="row-even"><td><p>flux</p></td>
+<td><p>Time-dependent flux in n/cm2/s</p></td>
+</tr>
+<tr class="row-odd"><td><p>power</p></td>
+<td><p>Time-dependent power in Watts</p></td>
+</tr>
+<tr class="row-even"><td><p>massgr</p></td>
+<td><p>Isotopic mass in grams for all the time-points</p></td>
+</tr>
+<tr class="row-odd"><td><p>toxicityIngestion</p></td>
+<td><p>Isotopic ingestion radiotoxicity in Sv for all the time-points</p></td>
+</tr>
+<tr class="row-even"><td><p>toxicityInhalation</p></td>
+<td><p>Isotopic inhalation radiotoxicity in Sv for all the time-points</p></td>
+</tr>
+<tr class="row-odd"><td><p>totalQt</p></td>
+<td><p>Time-dependent total decay heat in Watts</p></td>
+</tr>
+<tr class="row-even"><td><p>totalAtCuries</p></td>
+<td><p>Time-dependent total activity in Curie</p></td>
+</tr>
+<tr class="row-odd"><td><p>totalMassgr</p></td>
+<td><p>Time-dependent total mass in grams</p></td>
+</tr>
+<tr class="row-even"><td><p>totalToxIngestion</p></td>
+<td><p>Time-dependent total ingestion radiotoxicity in Sv</p></td>
+</tr>
+<tr class="row-odd"><td><p>totalToxInnhalation</p></td>
+<td><p>Time-dependent total inhalation radiotoxicity in Sv</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>All the isotopic time-dependent properties (e.g., <code class="docutils literal notranslate"><span class="pre">Nt</span></code>) are stored as matrices. The row corresponds to a specific isotope and the column to a specific time-point.</p></li>
+<li><p>Time-dependent flux and power are stored as 1-dim vectors.</p></li>
+<li><p>All the total-related attributes (e.g., <code class="docutils literal notranslate"><span class="pre">totalQt</span></code>) are stored as 1-dim vectors.</p></li>
+</ul>
+</div>
+<p>The following <strong>methods</strong> are stored on the object:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 84%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>getvalues</p></td>
+<td><p>Obtain the values for an attribute and specific isotope</p></td>
+</tr>
+<tr class="row-odd"><td><p>plot</p></td>
+<td><p>Plot the results for a specific attribute and specific isotope</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyIsoDep</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Project Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributors.html">Developer Team</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User’s Manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../develop/index.html">Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">User’s Manual</a><ul>
+      <li>Previous: <a href="postdepletion.html" title="previous chapter">Data Stored on <code class="docutils literal notranslate"><span class="pre">MainDepletion</span></code></a></li>
+      <li>Next: <a href="../Examples/index.html" title="next chapter">Examples</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Dan Kotlyar.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/Manual/resstorage.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

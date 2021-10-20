@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Depletion Case &#8212; pyIsoDep 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Decay Case" href="decay.html" />
+    <link rel="prev" title="Examples" href="index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="full-depletion-case">
+<span id="fulldep-example"></span><h1>Full Depletion Case<a class="headerlink" href="#full-depletion-case" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="description">
+<h2>Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<p>Example on how to execute a full depletion calculations.</p>
+</div>
+<div class="section" id="load-modules">
+<h2>Load modules<a class="headerlink" href="#load-modules" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">pyIsoDep.functions.maindepletionsolver</span> <span class="kn">import</span> <span class="n">MainDepletion</span>
+<span class="kn">from</span> <span class="nn">pyIsoDep.functions.generatedata</span> <span class="kn">import</span> <span class="n">TransmutationData</span>
+<span class="kn">from</span> <span class="nn">pyIsoDep.functions.postprocessresults</span> <span class="kn">import</span> <span class="n">Results</span>
+</pre></div>
+</div>
+<div class="section" id="cross-sections-pre-generated-in-advance">
+<h3>Cross sections pre-generated in advance<a class="headerlink" href="#cross-sections-pre-generated-in-advance" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyIsoDep.tests.pregenerated_xs</span> <span class="kn">import</span> <span class="n">ID</span><span class="p">,</span> <span class="n">N0</span><span class="p">,</span> <span class="n">sig_c</span><span class="p">,</span>\
+    <span class="n">sig_c2m</span><span class="p">,</span> <span class="n">sig_n2n</span><span class="p">,</span> <span class="n">sig_n3n</span><span class="p">,</span> <span class="n">sig_f</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="data-generation-stage">
+<h3>Data Generation Stage<a class="headerlink" href="#data-generation-stage" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Reset the data container</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">TransmutationData</span><span class="p">(</span><span class="n">libraryFlag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">wgtFY</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="c1"># Feed cross sections into the container</span>
+<span class="n">data</span><span class="o">.</span><span class="n">ReadData</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span> <span class="n">sig_f</span><span class="o">=</span><span class="n">sig_f</span><span class="p">,</span> <span class="n">sig_c</span><span class="o">=</span><span class="n">sig_c</span><span class="p">,</span> <span class="n">sig_c2m</span><span class="o">=</span><span class="n">sig_c2m</span><span class="p">,</span>
+              <span class="n">sig_n2n</span><span class="o">=</span><span class="n">sig_n2n</span><span class="p">,</span> <span class="n">sig_n3n</span><span class="o">=</span><span class="n">sig_n3n</span><span class="p">,</span> <span class="n">flagBarns</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="depletion-stage">
+<h3>Depletion Stage<a class="headerlink" href="#depletion-stage" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="define-metadata">
+<h4>Define metadata<a class="headerlink" href="#define-metadata" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nsteps</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">timeDays</span> <span class="o">=</span> <span class="mi">25</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">nsteps</span><span class="p">)</span>
+<span class="n">power</span> <span class="o">=</span> <span class="mf">348E+6</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">nsteps</span><span class="p">)</span>
+<span class="n">volume</span> <span class="o">=</span> <span class="mf">332097.750</span>  <span class="c1"># volume in cm**3</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="execute-depletion">
+<h4>Execute Depletion<a class="headerlink" href="#execute-depletion" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="c1"># define metadata (steps, flux, and so on)</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SetDepScenario</span><span class="p">(</span><span class="n">power</span><span class="o">=</span><span class="n">power</span><span class="p">,</span> <span class="n">timeUnits</span><span class="o">=</span><span class="s2">&quot;days&quot;</span><span class="p">,</span> <span class="n">timesteps</span><span class="o">=</span><span class="n">timeDays</span><span class="p">)</span>
+<span class="c1"># set initial composition</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SetInitialComposition</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span> <span class="n">N0</span><span class="p">,</span> <span class="n">vol</span><span class="o">=</span><span class="n">volume</span><span class="p">)</span>
+<span class="c1"># solve the Bateman equations</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">SolveDepletion</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;cram&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="post-depletion-analysis">
+<h4>Post depletion analysis<a class="headerlink" href="#post-depletion-analysis" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span><span class="o">.</span><span class="n">DecayHeat</span><span class="p">()</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">Radiotoxicity</span><span class="p">()</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">Activity</span><span class="p">()</span>
+<span class="n">dep</span><span class="o">.</span><span class="n">Mass</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="post-process-results">
+<h3>Post-process results<a class="headerlink" href="#post-process-results" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="n">Results</span><span class="p">(</span><span class="n">dep</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">getvalues</span><span class="p">(</span><span class="s2">&quot;totalQt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">array</span><span class="p">([</span> <span class="mf">7248640.09481547</span><span class="p">,</span> <span class="mf">22638779.94133376</span><span class="p">,</span> <span class="mf">22235106.01421065</span><span class="p">,</span>
+       <span class="mf">21792547.34578193</span><span class="p">,</span> <span class="mf">21511141.4579002</span> <span class="p">,</span> <span class="mf">21321796.30272089</span><span class="p">,</span>
+       <span class="mf">21187330.96762067</span><span class="p">,</span> <span class="mf">21088244.91790495</span><span class="p">,</span> <span class="mf">21013933.42155456</span><span class="p">,</span>
+       <span class="mf">20958439.33394426</span><span class="p">,</span> <span class="mf">20918279.14974557</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s2">&quot;Nt&quot;</span><span class="p">,</span> <span class="n">timeUnits</span><span class="o">=</span><span class="s2">&quot;days&quot;</span><span class="p">,</span> <span class="n">markers</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--^&#39;</span><span class="p">,</span> <span class="s1">&#39;--o&#39;</span><span class="p">],</span> <span class="n">isotopes</span><span class="o">=</span><span class="p">[</span><span class="mi">531350</span><span class="p">,</span> <span class="mi">541350</span><span class="p">],</span>
+         <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Atomic density, #/b/cm&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/full_depletion_21_0.png" src="../_images/full_depletion_21_0.png" />
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s2">&quot;totalQt&quot;</span><span class="p">,</span> <span class="n">timeUnits</span><span class="o">=</span><span class="s2">&quot;days&quot;</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="mf">1E+6</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Decay heat, MW&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/full_depletion_22_0.png" src="../_images/full_depletion_22_0.png" />
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s2">&quot;flux&quot;</span><span class="p">,</span> <span class="n">timeUnits</span><span class="o">=</span><span class="s2">&quot;hours&quot;</span><span class="p">,</span> <span class="n">markers</span><span class="o">=</span><span class="s2">&quot;--ro&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Flux, n/cm2/s&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/full_depletion_23_0.png" src="../_images/full_depletion_23_0.png" />
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyIsoDep</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Project Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributors.html">Developer Team</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Manual/index.html">User’s Manual</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../develop/index.html">Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Examples</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Examples</a></li>
+      <li>Next: <a href="decay.html" title="next chapter">Decay Case</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Dan Kotlyar.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/Examples/full_depletion.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
