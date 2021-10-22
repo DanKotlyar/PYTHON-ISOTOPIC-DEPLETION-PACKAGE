@@ -3,7 +3,8 @@ Three solvers are enabled here to solve the Bateman equations:
 
 (1) ODEINT solver
 -----------------
-Integrate a system of ordinary differential equations
+Integrate a system of ordinary differential equations with RK45 adaptive time
+mesh scheme
 
 (2) EXPM solver
 ---------------
@@ -25,8 +26,10 @@ ACM - Transactions On Mathematical Software, 24(1):130-156, 1998
 """
 
 import numpy as np
+from pyIsoDep.functions.checkerrors import _ispositive
 from scipy.linalg import solve as linsolver
 from scipy.linalg import expm
+from scipy.integrate import odeint
 
 # -----------------------------------------------------------------------------
 # Coefficients and poles of the partial fraction expansion
@@ -128,8 +131,108 @@ class expmSolver:
     def __init__(self):
         """reset values with a complete list of all the nuclides"""
         pass
-
+    
     def solve(self, mtx, n0, dt):
         """Solve the exponential of a matrix"""
         n1 = np.dot(expm(mtx * dt), n0)
         return n1
+
+
+class adaptiveOdeintSolver:
+    
+    def __dNdt(self, n0, t, idx):
+        """function produces time rate of change for each isotope"""
+        
+        # Obtain the interpolated fission energy, xs, and transmutation mtx
+        # -----------------------------------------------------------------
+        fissE, sigf, transmutationmtx = self.dep._getInterpXS(t,\
+            self.xsinterp)
+
+        # flux is used directly
+        # -----------------------------------------------------------------
+        if not self.dep.flagPower:
+            # calculate power for this step
+            self.dep.power[idx] = (self.dep.flux[idx] * sigf * n0\
+                * fissE * self.dep.volume).sum()
+
+        # power is provided and needs to be converted to flux
+        # -----------------------------------------------------------------
+        else:
+            self.dep.flux[idx] = self.dep.power[idx] / (
+                        sigf * n0 * fissE * self.dep.volume).sum()
+
+        # define the overall matrix to represent Bateman equations
+        # -----------------------------------------------------------------
+        mtxA = transmutationmtx*self.dep.flux[idx] + self.dep.decaymtx
+
+        # solve and obtain the concentrations after a single depletion
+        # -----------------------------------------------------------------
+        dNdt = np.dot(mtxA, n0)
+        
+        return dNdt
+    
+    
+    def __init__(self, dep, xsinterp, rtol=1E-10):
+        """function initalized apdative time mesh odeint solver
+        
+
+        Parameters
+        ----------
+        dep : object
+            depletion solver object.
+        xsinterp : bool
+            flag for cross section interpolation.
+        rtol : float, optional
+            relative convergence tolerance of isotopic concentration. The
+            default is 1E-10.
+
+        Returns
+        -------
+        None.
+
+        """
+        _ispositive(rtol, "relative convergence tolerance")
+        self.dep = dep
+        self.rtol = rtol
+        self.xsinterp = xsinterp
+    
+    
+    def solve(self, rtol=1.0e-10):
+        """solve change in concentration with adaptive time mesh scheme"""
+        for idx, dt in enumerate(self.dep.timesteps):
+            self.dep.Nt[:, idx+1] = odeint(self.__dNdt,\
+                tuple(self.dep.Nt[:, idx]), np.array([0,dt]), args=(idx,),\
+                    rtol=rtol)[1,:]
+
+
+class odeintSolver:
+    """Solve using scipy odeint RK45 adaptive time mesh scheme"""
+    
+    def __init__(self, rtol=1E-10):
+        """function initalizes odeint solver
+        
+
+        Parameters
+        ----------
+        rtol : float, optional
+            Isotopic concentration convergence criteria, relative difference.
+            The default is 1E-10.
+
+        Returns
+        -------
+        None.
+
+        """
+        _ispositive(rtol, "relative convergence tolerance")
+        self.rtol = rtol
+    
+    def __dNdt(self, n0, dt, flt_mtx):
+        """function produces time rate of change for each isotope"""
+        mtx = flt_mtx.reshape(int(len(flt_mtx)**0.5), int(len(flt_mtx)**0.5))
+        return np.dot(mtx, n0)
+    
+    def solve(self, mtx, n0, dt):
+        """solve change in concentration"""
+        return odeint(self.__dNdt, tuple(n0), np.array([0, dt]),\
+            args=(mtx.flatten(),), rtol=self.rtol)[1,:]
+    

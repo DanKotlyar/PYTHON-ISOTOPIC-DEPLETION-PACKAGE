@@ -54,7 +54,7 @@ dep.SetDepScenario(power=power, timeUnits="seconds", timesteps=dt)
 # set initial composition
 dep.SetInitialComposition(xsTable[:, 0], xsTable[:, 1], vol=VOL)
 # solve the Bateman equations
-dep.SolveDepletion(method="cram", xsinterp=False)
+dep.SolveDepletion(method="adaptive", xsinterp=False)
 # Post depletion analysis
 dep.DecayHeat()
 dep.Radiotoxicity()

@@ -330,6 +330,14 @@ class TransmutationData:
                 fymtx[idxFull, idxFull[idx]] = fymtxPart[idxPart, idxPart[idx]]
             self.fymtx = fymtx
 
+        # Overwrite a pre-generated decay matrix
+        if decaymtxPart is not None:
+            decaymtx = np.zeros((self.nIsotopes, self.nIsotopes))
+            for idx in range(len(idxFull)):
+                decaymtx[idxFull, idxFull[idx]] =\
+                    decaymtxPart[idxPart, idxPart[idx]]
+            self.decaymtx = decaymtx
+
         # Store the matrix with the cross sections
         self.xsData = xsData
         self.EfissMeV = EfissMeV

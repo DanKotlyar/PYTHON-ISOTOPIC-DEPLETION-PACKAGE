@@ -9,13 +9,14 @@ The default library uses a 1743 x 1743 matrix.
 
 
 Created on Sat Oct 16 01:30:00 2021 @author: Dan Kotlyar
-Last updated on Sat Oct 16 14:15:00 2021 @author: Dan Kotlyar
+Last updated on Thrus Oct 21 08:45:00 2021 @author: Matt Krecicki
 
 """
 
 import numpy as np
-
-from pyIsoDep.functions.batemansolvers import CramSolver, expmSolver
+import time
+from pyIsoDep.functions.batemansolvers import CramSolver, expmSolver,\
+    odeintSolver, adaptiveOdeintSolver
 from pyIsoDep.functions.checkerrors import _inlist,\
     _isequallength, _anynegative, _is1darray, _ispositive, _isarray
 from pyIsoDep.functions.header import NAVO, BQ_2_CURIE,\
@@ -92,7 +93,7 @@ class MainDepletion:
         # ---------------------------------------------------------------------
         self._xsDataSets = xsDataSets
         self._timeframes = timeframes
-
+        self._solveTime = None
         # Verify that same IDs and chains are used for all argv (i.e.data sets)
         # ---------------------------------------------------------------------
         if nxssets > 1:
@@ -251,7 +252,7 @@ class MainDepletion:
         self.providedID = ID
         self.volume = vol
 
-    def SolveDepletion(self, method="cram", xsinterp=False):
+    def SolveDepletion(self, method="cram", xsinterp=False, rtol=1E-10):
         """Solve the Bateman equations that include transmutation and decay
 
         Parameters
@@ -261,6 +262,9 @@ class MainDepletion:
         xsinterp : bool
             Flag to indicate whether interpolation in between timesteps is
             allowed to be performed for the transmutation data.
+        rtol : float, optional
+            Isotopic concentration convergence criteria, relative difference.
+            The default is 1E-10
 
         Attributes
         ----------
@@ -278,7 +282,7 @@ class MainDepletion:
         >>> dep.SetInitialComposition([541350, 922350], [0.0, 0.021])
         >>> dep.SolveDepletion("cram")
         """
-
+        
         # Check potential errors
         # ---------------------------------------------------------------------
         _inlist(method, "Method to solve Bateman eqs", DEPLETION_METHODS)
@@ -286,6 +290,8 @@ class MainDepletion:
             singleDepletion = CramSolver()
         elif method == "expm":
             singleDepletion = expmSolver()
+        elif method == "odeint":
+            singleDepletion = odeintSolver(rtol=rtol)
 
         if self.power is None and self.flux is None:
             raise ValueError("Either power or flux must be defined when "
@@ -301,7 +307,16 @@ class MainDepletion:
         # Nt will store the concentrations as a function of time
         self.Nt = np.zeros((self.nIsotopes, self.nsteps + 1))
         self.Nt[:, 0] = self.N0  # initial concentrations
-
+        tic = time.perf_counter() #start timer
+        
+        if method == "adaptive": #if adaptive time mesh required solve problem
+            adptDepletion = adaptiveOdeintSolver(self, xsinterp, rtol=rtol)
+            adptDepletion.solve()
+            self = adptDepletion.dep
+            toc = time.perf_counter()
+            self._solveTime = toc - tic
+            return
+        
         for idx, dt in enumerate(self.timesteps):
 
             # Obtain the interpolated fission energy, xs, and transmutation mtx
@@ -330,14 +345,20 @@ class MainDepletion:
             # -----------------------------------------------------------------
             self.Nt[:, idx+1] =\
                 singleDepletion.solve(mtxA, self.Nt[:, idx], dt)
+                
+        toc = time.perf_counter()
+        self._solveTime = toc - tic
 
-    def SolveDecay(self, method="cram"):
+    def SolveDecay(self, method="cram", rtol=1E-10):
         """Solve the Bateman equations with only the decay chains
 
         Parameters
         ----------
         method : str
             Method used to solve the decay chains
+        rtol : float, optional
+            Isotopic concentration convergence criteria, relative difference.
+            The default is 1E-10
 
         Attributes
         ----------
@@ -362,11 +383,22 @@ class MainDepletion:
             singleDepletion = CramSolver()
         elif method == "expm":
             singleDepletion = expmSolver()
+        elif method == "odeint":
+            singleDepletion = odeintSolver(rtol=rtol)
 
         # Nt will store the concentrations as a function of time
         self.Nt = np.zeros((self.nIsotopes, self.nsteps + 1))
         self.Nt[:, 0] = self.N0  # initial concentrations
-
+        tic = time.perf_counter()
+        
+        if method == "adaptive": #if adaptive time mesh required solve problem
+            adptDepletion = adaptiveOdeintSolver(self, False, rtol=rtol)
+            adptDepletion.solve()
+            self = adptDepletion.dep
+            toc = time.perf_counter()
+            self._solveTime = toc - tic
+            return
+        
         for idx, dt in enumerate(self.timesteps):
 
             # define the overall matrix to represent Bateman equations
@@ -377,6 +409,8 @@ class MainDepletion:
             # -----------------------------------------------------------------
             self.Nt[:, idx+1] =\
                 singleDepletion.solve(mtxA, self.Nt[:, idx], dt)
+        toc = time.perf_counter()
+        self._solveTime = toc - tic
 
     def _getInterpXS(self, currtime, interpFlag):
         """Obtains the transmutation data required to solve depletion"""

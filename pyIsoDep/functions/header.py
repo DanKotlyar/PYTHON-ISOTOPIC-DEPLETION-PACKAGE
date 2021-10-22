@@ -4,7 +4,7 @@ File to define basic parameters shared within the package.
 
 
 Created on Sat Oct 16 01:30:00 2021 @author: Dan Kotlyar
-Last updated on Sat Oct 16 02:30:00 2021 @author: Dan Kotlyar
+Last updated on Sat Oct 16 08:42:00 2021 @author: Matt Krecicki
 
 """
 
@@ -27,7 +27,7 @@ TIME_UNITS_LIST = list(TIME_UNITS_DICT)
 #                      DEFAULT OPTIONS
 # -----------------------------------------------------------------------------
 
-DEPLETION_METHODS = ["cram", "expm"]    # current depletion options
+DEPLETION_METHODS = ["cram", "expm", "odeint", "adaptive"]  # current depletion options
 H5_PATH = "bgcore_data.h5"              # Pre-generated librray
 
 # -----------------------------------------------------------------------------
