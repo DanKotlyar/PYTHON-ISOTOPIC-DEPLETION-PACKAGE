@@ -13,6 +13,8 @@ from pyIsoDep.functions.postprocessresults import Results
 
 def _xenonAnalyticMatt(time, I0, X0, sigaX, SIG_F, flx, lmdaI, lmdaX, fyI, 
                        fyX):
+    B2CM = 10E-24
+    sigaX = sigaX * B2CM
     
     It = ((fyI * SIG_F * flx)/lmdaI)*(1-np.exp(-1*lmdaI*time)) + (I0*np.exp(-1*lmdaI*time))
     
@@ -25,48 +27,61 @@ def _xenonAnalyticMatt(time, I0, X0, sigaX, SIG_F, flx, lmdaI, lmdaX, fyI,
     return It, Xt
 
 
+def analyticalIodine():
+    pass
+
+
+def analyticalXenon():
+    pass
+
+
 def _xenonAnalytic(timepoints, I0, X0, sigaX, SIG_F, flx, lmdaI, lmdaX, fyI,
                    fyX):
     """analytical solution for Iodine -> Xenon chain"""
     B2CM = 10E-24  # conversion from barns to cm**2
         
-    It = (B2CM*fyI*SIG_F*flx / lmdaI) * (1-np.exp(-lmdaI*timepoints)) +\
-        I0*np.exp(-lmdaI*timepoints)
+    I135 = ((fyI*SIG_F*flx) / lmdaI) * (1-np.exp(-lmdaI*timepoints)) 
+    # + I0*np.exp(-lmdaI*timepoints)
         
-    Xt = B2CM*(fyI+fyX)*SIG_F*flx/(lmdaX+sigaX*flx*B2CM)*(
+    Xt = (fyI+fyX)*SIG_F*flx/(lmdaX+sigaX*flx*B2CM)*(
         1-np.exp((-lmdaX-sigaX*flx*B2CM)*timepoints)) +\
-        (fyI*SIG_F*flx*B2CM-lmdaI*I0)/(lmdaX-lmdaI+sigaX*flx*B2CM)*(
+        (fyI*SIG_F*flx-lmdaI*I0)/(lmdaX-lmdaI+sigaX*flx*B2CM)*(
             np.exp((-lmdaX-sigaX*B2CM*flx)*timepoints)-np.exp(-lmdaI*timepoints)) +\
         X0*np.exp((-lmdaX-sigaX*flx*B2CM)*timepoints)
         
-    return It, Xt
+    return I135*B2CM, Xt*B2CM
 
    
 def test_analytical_xenon():
     """compare analytical and numerical solutions"""
+    
     timepoints = np.array([   0,  300,  600,  900, 1200, 1500, 1800, 2100, 2400]) #time in seconds
     volume = 1.0  # volume in cm**3
     flux = 4.91024e+14*np.ones(len(timepoints)-1)  #flux
+        
+    ID =    [531350, 541350,     922350]
+    sig_c = [0.0,    250537.62,  0.0]
+    sig_f = [0.0,    0.0,        97.]
+    kappa = [0.0,    0.0,        202.44]
+    N0 =    [0.0,    0.0,        6.43230E-04]
     
-    
-    ID =    [531350, 541350,    611490, 621490,  922350,      922380]
-    sig_c = [0.0,    250537.62, 132.47, 6968.75, 0.0,         0.0]
-    sig_f = [0.0,    0.0,       0.000,  0.00000, 97.,         0.0]
-    kappa = [0.0,    0.0,       0.000,  0.00000, 202.44,      0.0]
-    N0 =    [0.0,    0.0,       0.000,  0.00000, 6.43230E-04, 0.0]
-    
-    #    531350, 541350, 611490, 621490, 922350, 922380
+    #    531350, 541350, 922350
     mtxFY = [
-        [0.0000, 0.0000, 0.0000, 0.0000, 0.06306, 0.0],  # 531350
-        [0.0000, 0.0000, 0.0000, 0.0000, 0.00248, 0.0],  # 541350
-        [0.0000, 0.0000, 0.0000, 0.0000, 0.01100, 0.0],  # 611490
-        [0.0000, 0.0000, 0.0000, 0.0000, 0.00000, 0],        # 621490
-        [0.0000, 0.0000, 0.0000, 0.0000, 0.00000, 0],        # 922350
-        [0.0000, 0.0000, 0.0000, 0.0000, 0.00000, 0],]       # 922380
+        [0.0000, 0.0000, 0.06306],  # 531350
+        [0.0000, 0.0000, 0.00248],  # 541350
+        [0.0000, 0.0000, 0.00000]]  # 922350
+      
+    #    531350,         541350,      922350
+    mtxDY = [
+        [-2.93061e-05,   0.0000,      0.0000],  # 531350
+        [2.93061e-05,   -2.10657e-05, 0.0000],  # 541350
+        [0.0000,         0.0000,      0.00000],  # 922350
+        ]
     
     data = TransmutationData(libraryFlag=True, wgtFY=1.0) # Reset the data container
-    data.ReadData(ID, sig_f=sig_f, sig_c=sig_c, fymtx=mtxFY, EfissMeV=kappa) # Feed cross sections into the container
-    #data.Condense(ID) # Condense the data only to specific set of isotopes
+    data.ReadData(ID, sig_f=sig_f, sig_c=sig_c, fymtx=mtxFY, EfissMeV=kappa,
+                  decaymtx=mtxDY) # Feed cross sections into the container
+    data.Condense(ID) # Condense the data only to specific set of isotopes
     dep = MainDepletion(0.0, data)
     
     
@@ -80,26 +95,23 @@ def test_analytical_xenon():
     dep.Mass()
     res = Results(dep)
     
-    
     ICalc = res.getvalues(isotopes=[531350], attribute="Nt")
     XeCalc = res.getvalues(isotopes=[541350], attribute="Nt")
     
+    I135, XeRef = _xenonAnalyticMatt(timepoints,
+                                 float(N0[0]),
+                                 float(N0[1]),
+                                 float(sig_c[1]),
+                                 float(N0[2]*sig_f[2]),
+                                 float(flux[0]),
+                                 float(abs(mtxDY[0][0])),
+                                 float(abs(mtxDY[1][1])),
+                                 float(mtxFY[0][2]), 
+                                 float(mtxFY[1][2]))
     
-    IRef, XeRef = _xenonAnalytic(timepoints,
-                                 N0[0],
-                                 N0[1],
-                                 sig_c[1],
-                                 sig_f[4]*6.43230E-04,
-                                 4.91024e+14, #flux
-                                 2.93061e-05,
-                                 2.10657e-05,
-                                 0.06306,
-                                 0.00248)
-        
-    
-    #plt.plot(timepoints/60, IRef, label="Analytical I")
-    plt.plot(timepoints/60, XeRef, label="Analytical Xe")
-    #plt.scatter(timepoints/60, ICalc, label="Cram I", s=12, marker="o")
+    plt.plot(timepoints/60, I135*1E-24, label="Analytical I")
+    plt.plot(timepoints/60, XeRef*1E-24, label="Analytical Xe")
+    plt.scatter(timepoints/60, ICalc, label="Cram I", s=12, marker="o")
     plt.scatter(timepoints/60, XeCalc, label="Cram Xe", s=12, marker="x")
     plt.xlabel("Time, minutes")
     plt.ylabel("Conc., atoms/b-cm")
@@ -191,6 +203,5 @@ def test_analytical_xenon_deacy():
     plt.close()
 
 
-
-test_analytical_xenon_deacy()
-#test_analytical_xenon()
+#test_analytical_xenon_deacy()
+res, dep, data = test_analytical_xenon()
