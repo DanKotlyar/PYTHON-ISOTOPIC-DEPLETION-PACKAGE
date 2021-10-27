@@ -4,17 +4,19 @@ Post processing tool to get specific values and plot results.
 Data can be obtain for individual isotopes.
 
 Created on Sat Oct 16 01:00:00 2021 @author: Dan Kotlyar
-Last updated on Sat Oct 16 01:30:00 2021 @author: Dan Kotlyar
+Last updated on Sat Oct 27 10:50:00 2021 @author: Matt Krecicki
 
 """
 
 import numpy as np
+import h5py
 import matplotlib.pyplot as plt
 
 from pyIsoDep.functions.checkerrors import _inlist, _isarray, _isstr,\
     _isnumber
 from pyIsoDep.functions.header import TIME_UNITS_DICT,\
-    TIME_UNITS_LIST, FONT_SIZE
+    TIME_UNITS_LIST, FONT_SIZE, METADATA_ATTR, RESULTS_ATTR, XS_DATA_ATTR,\
+        INITIAL_ATTR
 
 
 class Results:
@@ -85,6 +87,43 @@ class Results:
             return values[idxFull, :]
         else:
             return values
+        
+    def export(self, filename):
+        """function exports results to hdf5 file
+        
+        The method allows the entire simulation results, cross section
+        libaries, and meta-data to be written to an hdf5 file. 
+        
+
+        Parameters
+        ----------
+        filename : str
+            hdf5 file output name.
+
+        Returns
+        -------
+        None.
+
+        """
+        
+                
+        _isstr(filename, "results hdf5 output file name")
+        with h5py.File(filename, "w") as f:
+            #build meta data
+            meta = f.create_group("metaData")
+            
+            for i in METADATA_ATTR:
+                data = self.getvalues(i)
+                meta.create_dataset(METADATA_ATTR, data)
+            
+            
+            #write inital conditions
+            
+            #write results
+            
+            #write cross section / decay / calc data
+            
+            a=1
 
     def plot(self, attribute, timeUnits="seconds",
              isotopes=None, xlabel=None, ylabel=None, norm=1,
