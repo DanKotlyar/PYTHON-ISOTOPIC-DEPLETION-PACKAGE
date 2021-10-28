@@ -4,7 +4,7 @@ File to define basic parameters shared within the package.
 
 
 Created on Sat Oct 16 01:30:00 2021 @author: Dan Kotlyar
-Last updated on Sat Oct 27 10:50:00 2021 @author: Matt Krecicki
+Last updated on Sat Oct 16 08:42:00 2021 @author: Matt Krecicki
 
 """
 
@@ -94,18 +94,23 @@ RADIOTOXICITY_ATTR = ["Nt", "lmbda", "inhalation", "ingestion", "volume"]
 # Attributes that must exist to calculate mass
 MASS_ATTR = ["Nt", "AW", "volume"]
 
+#hdf5 output file atrributes list
 
-#hdf5 output file atrributes list----------------------------------------------
+HDF5_GROUPS = {"metaData": ["nIsotopes", "AW", "fullId", "timepoints",
+                            "timesteps", "timeunits", "usertimesteps",
+                            "flagPower", "_timeframes", "providedID",
+                            "nsteps"],
+               "results": ["Nt", "At", "AtCurie", "Qt", "flux", "power",
+                           "massgr", "totalAtCurie", "totalMassgr", "totalQt",
+                           "totalToxIngestion", "totalToxInhalation",
+                           "toxicityIngestion", "toxicityInhalation"],
+               "xsData": ["fullId", "nIsotopes", "AW", "Q", "BR", "lmbda",
+                          "decaymtx", "ingestion", "inhalation", "fymtx",
+                          "EfissMeV", "EfissJoule", "xsData",
+                          "transmutationmtx"],
+               "deplData":["BR", "decaymtx", "ingestion", "inhalation",
+                           "lmbda", ],
+               "inital": ["volume", "N0", "providedN0"]}
 
-#meta data group attributes
-METADATA_ATTR = ["nIsotopes", "AW", "fullId"]
 
-#results data group attributes
-RESULTS_ATTR = []
-
-#cross section data group attributes
-XS_DATA_ATTR = []
-
-#inital conditions data group attributes
-INITIAL_ATTR  = []
 

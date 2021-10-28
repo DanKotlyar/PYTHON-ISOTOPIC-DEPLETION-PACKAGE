@@ -65,12 +65,17 @@ dep.Radiotoxicity()
 dep.Activity()
 dep.Mass()
 
+
 # -----------------------------------------------------------------------------
 #                  POST-PROCESS RESULTS
 # -----------------------------------------------------------------------------
 res = Results(dep)
 res.plot("Nt", timeUnits="hours", isotopes=[531350, 541350],
          ylabel="Atomic density, #/b/cm")
-
 res.plot("Qt", timeUnits="hours", isotopes=[541350], ylabel="Flux, n/cm2/s")
 res.plot("flux", ylabel="Flux, n/cm2/s", pltType="semilogx")
+
+res.export("simpleXenon.h5") #export results to hdf5
+
+
+

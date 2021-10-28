@@ -4,7 +4,7 @@ Post processing tool to get specific values and plot results.
 Data can be obtain for individual isotopes.
 
 Created on Sat Oct 16 01:00:00 2021 @author: Dan Kotlyar
-Last updated on Sat Oct 27 10:50:00 2021 @author: Matt Krecicki
+Last updated on Sat Oct 16 01:30:00 2021 @author: Dan Kotlyar
 
 """
 
@@ -15,12 +15,13 @@ import matplotlib.pyplot as plt
 from pyIsoDep.functions.checkerrors import _inlist, _isarray, _isstr,\
     _isnumber
 from pyIsoDep.functions.header import TIME_UNITS_DICT,\
-    TIME_UNITS_LIST, FONT_SIZE, METADATA_ATTR, RESULTS_ATTR, XS_DATA_ATTR,\
-        INITIAL_ATTR
+    TIME_UNITS_LIST, FONT_SIZE, HDF5_GROUPS, DATA_ATTR 
+from pyIsoDep.functions.generatedata import TransmutationData
 
 
 class Results:
-    """Container to store results and process them
+    """Container to store results and process them, also reconstructs results
+    from hdf5 file
 
 
     Parameters
@@ -37,13 +38,70 @@ class Results:
     Examples
     --------
     >>> dep = Results(depscenario)
+    >>> dep = Results("dep.h5")
 
     """
 
     def __init__(self, results):
         """reset by copying all the attributes from the results container"""
+        if type(results) is str:
+            self.__recover(results)
+        else:
+            self.__dict__ = results.__dict__.copy()
 
-        self.__dict__ = results.__dict__.copy()
+
+    def __buildGroup(self, f, key, attrs): 
+        """function reconstructs a single groups results data from hdf5 file"""
+        for i in attrs:
+            data = f[key][i][()]
+            setattr(self, i, data)
+
+
+    def __buildCrossSectionLibary(self, f, xsKeys):
+        """function rebuilds cross section libaries from hdf5 file"""
+        xslibs = {}
+        for i in list(f["xsData"].keys()):
+            xslib = TransmutationData(libraryFlag=False)
+            for j in xsKeys:
+                data = f["xsData"][i][j][()]
+                setattr(xslib, j, data)
+            xslibs[float(i)] = xslib
+        
+        self._xsDataSets = xslibs
+    
+    
+    def __recover(self, file):
+        """function recovers all results data container from hdf5 file"""
+        _isstr(file, "results hdf5 output file name")
+        keys =  list(HDF5_GROUPS.keys())
+        keys.remove("xsData")
+        with h5py.File(file, "r+") as f:
+            for i in keys: self.__buildGroup(f, i, HDF5_GROUPS[i])
+            self.__buildCrossSectionLibary(f, HDF5_GROUPS["xsData"])
+        
+
+    def __exportGroup(self, group, ATTR, obj=None):
+        """function exports a groups results data to hdf5 file"""
+        for i in ATTR:
+            _isstr(i, "Attribute")
+            if obj is not None:
+                data = getattr(obj, i)
+            else:
+                data = getattr(self, i)
+            if type(data) in [np.ndarray, list]:                    
+                if type(data) is list: data = np.asarray(data)     
+                group.create_dataset(i, data=data, dtype=str(data.dtype))
+            elif type(data) is str:
+                group.create_dataset(i, data=data.encode("ascii", "ignore"))
+            else:
+                group.create_dataset(i, data=data, dtype=type(data))
+
+
+    def __exportXsSet(self, name, xslib, group):
+        """function exports cross section data set to hdf5 file"""
+        subgroup = group.create_group(str(name))
+        self.__exportGroup(subgroup, list(DATA_ATTR.keys()), obj=xslib)
+        
 
     def getvalues(self, attribute, isotopes=None):
         """Obtain the values of a specific property
@@ -87,7 +145,8 @@ class Results:
             return values[idxFull, :]
         else:
             return values
-        
+    
+    
     def export(self, filename):
         """function exports results to hdf5 file
         
@@ -109,21 +168,14 @@ class Results:
                 
         _isstr(filename, "results hdf5 output file name")
         with h5py.File(filename, "w") as f:
-            #build meta data
-            meta = f.create_group("metaData")
-            
-            for i in METADATA_ATTR:
-                data = self.getvalues(i)
-                meta.create_dataset(METADATA_ATTR, data)
-            
-            
-            #write inital conditions
-            
-            #write results
-            
-            #write cross section / decay / calc data
-            
-            a=1
+            keys =  list(HDF5_GROUPS.keys())
+            keys.remove("xsData")
+            for i in keys:
+                self.__exportGroup(f.create_group(i), HDF5_GROUPS[i])  
+            xs = f.create_group("xsData")
+            for i in list(self._xsDataSets.keys()):               
+                self.__exportXsSet(i, self._xsDataSets[i], xs)
+
 
     def plot(self, attribute, timeUnits="seconds",
              isotopes=None, xlabel=None, ylabel=None, norm=1,
@@ -239,3 +291,30 @@ class Results:
         plt.rc('axes', labelsize=fontsize)  # labels
         plt.rc('xtick', labelsize=fontsize)  # tick labels
         plt.rc('ytick', labelsize=fontsize)  # tick labels
+
+
+    def rank(self, parameter="decayheat", timepoint=None):
+        """function ranks parameter of interest from most important to least 
+        important. 
+        
+
+        Parameters
+        ----------
+        parameter : str, optional
+            output of interest to be ranked. The optional are "decayheat",
+            "reactivity", "ingestion", and "inhalation" The default is
+            "decayheat".
+        timepoint : float, optional
+            specific time point of interest
+
+        Returns
+        -------
+        df : dict
+            dictionary containing ranking of parameter
+
+        """
+        _inlist(parameter, "rank parameter of interest",\
+                ["decayheat", "reactivity", "ingestion", "inhalation"])
+        df = {}
+        
+        return df

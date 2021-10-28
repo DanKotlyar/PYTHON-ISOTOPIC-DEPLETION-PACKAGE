@@ -72,3 +72,5 @@ res.plot("totalQt", norm=1E+6, ylabel="Total Decay Heat, MW",
 res.plot("Qt", isotopes=[531350, 541350], norm=1E+6, ylabel="Total Decay Heat, MW")
 
 res.plot("flux", ylabel="Flux, n/cm2/s", pltType="semilogx")
+
+res.export("scenario.h5")
