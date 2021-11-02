@@ -29,8 +29,6 @@ data = TransmutationData(libraryFlag=True, wgtFY=1.0)
 # Feed cross sections into the container
 data.ReadData(ID, sig_f=sig_f, sig_c=sig_c, sig_c2m=sig_c2m,
               sig_n2n=sig_n2n, sig_n3n=sig_n3n, flagBarns=False)
-toc = timeit.timeit()
-print("Time elapsed for reading data = {} seconds ".format(toc-tic))
 
 # -----------------------------------------------------------------------------
 #                            DEPLETION
@@ -52,8 +50,9 @@ dep.DecayHeat()
 dep.Radiotoxicity()
 dep.Activity()
 dep.Mass()
-toc = timeit.timeit()  # end time
-print("{} seconds ".format(toc-tic))
+dep.Reactivity()
+
+print("{:0.3f} seconds ".format(dep._solveTime))
 
 # -----------------------------------------------------------------------------
 #                  POST-PROCESS RESULTS
@@ -67,3 +66,5 @@ res.plot("Nt", timeUnits="hours", isotopes=[531350, 541350],
          ylabel="Atomic density")
 res.plot("Qt", timeUnits="hours", isotopes=[531350],
          ylabel="Decay heat, Watts")
+res.plot("reactivity", timeUnits="hours", isotopes=[531350, 541350, 621490],
+         ylabel="Reactivity, pcm")

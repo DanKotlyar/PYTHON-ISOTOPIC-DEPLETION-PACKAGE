@@ -20,7 +20,7 @@ from datetime import datetime
 start_time = datetime.now()
 
 
-FY_WGT = 0.0  # determines the fission yield wieghting
+FY_WGT = 1.0  # determines the fission yield wieghting
 VOL = 332097.8  # cm^3
 
 
@@ -48,18 +48,19 @@ fullthrust.ReadData(ID=xsTable[:, 0], sig_f=xsTable[:, 3], sig_c=xsTable[:, 2],
 # -------------------------------------------------------------------------
 dep = MainDepletion([0.0, 5.5, 30.0], bootstrap, tempramp, fullthrust)
 # define metadata (steps, flux, and so on)
-power = 1E+6*np.array([16.545, 118.49, 272.52, 330.22, 272.52, 214.82, 118.49])
-dt = np.array([5.5, 24.5, 7., 1800., 7., 180., 40.])
+power = 1E+6*np.array([16.545, 118.49, 272.52, 330.22, 272.52, 214.82, 118.49, 0.0, 0.0, 0.0])
+dt = np.array([5.5, 24.5, 7., 1800., 7., 180., 40., 3600., 3600., 3600.])
 dep.SetDepScenario(power=power, timeUnits="seconds", timesteps=dt)
 # set initial composition
 dep.SetInitialComposition(xsTable[:, 0], xsTable[:, 1], vol=VOL)
 # solve the Bateman equations
-dep.SolveDepletion(method="adaptive", xsinterp=False)
+dep.SolveDepletion(method="cram", xsinterp=True)
 # Post depletion analysis
 dep.DecayHeat()
 dep.Radiotoxicity()
 dep.Activity()
 dep.Mass()
+dep.Reactivity()
 
 
 # Post-process results
@@ -72,5 +73,8 @@ res.plot("totalQt", norm=1E+6, ylabel="Total Decay Heat, MW",
 res.plot("Qt", isotopes=[531350, 541350], norm=1E+6, ylabel="Total Decay Heat, MW")
 
 res.plot("flux", ylabel="Flux, n/cm2/s", pltType="semilogx")
+
+res.plot("reactivity", isotopes=[531350, 541350, 621490],
+         ylabel="Reactivity, pcm", pltType="semilogx")
 
 res.export("scenario.h5")

@@ -4,18 +4,19 @@ Post processing tool to get specific values and plot results.
 Data can be obtain for individual isotopes.
 
 Created on Sat Oct 16 01:00:00 2021 @author: Dan Kotlyar
-Last updated on Sat Oct 16 01:30:00 2021 @author: Dan Kotlyar
+Last updated on Thrus Oct 28 09:12:00 2021 @author: Matt Krecicki
 
 """
 
 import numpy as np
+import pandas as pa
 import h5py
 import matplotlib.pyplot as plt
 
 from pyIsoDep.functions.checkerrors import _inlist, _isarray, _isstr,\
-    _isnumber
+    _isnumber, _ispositive
 from pyIsoDep.functions.header import TIME_UNITS_DICT,\
-    TIME_UNITS_LIST, FONT_SIZE, HDF5_GROUPS, DATA_ATTR 
+    TIME_UNITS_LIST, FONT_SIZE, HDF5_GROUPS, DATA_ATTR, ZAI_DICT
 from pyIsoDep.functions.generatedata import TransmutationData
 
 
@@ -76,7 +77,8 @@ class Results:
         keys =  list(HDF5_GROUPS.keys())
         keys.remove("xsData")
         with h5py.File(file, "r+") as f:
-            for i in keys: self.__buildGroup(f, i, HDF5_GROUPS[i])
+            for i in keys:
+                self.__buildGroup(f, i, HDF5_GROUPS[i])
             self.__buildCrossSectionLibary(f, HDF5_GROUPS["xsData"])
         
 
@@ -165,7 +167,6 @@ class Results:
 
         """
         
-                
         _isstr(filename, "results hdf5 output file name")
         with h5py.File(filename, "w") as f:
             keys =  list(HDF5_GROUPS.keys())
@@ -293,7 +294,16 @@ class Results:
         plt.rc('ytick', labelsize=fontsize)  # tick labels
 
 
-    def rank(self, parameter="decayheat", timepoint=None):
+    def __id2zai(self, Id):
+        """converts Id into string ZAI name"""
+        zai = ZAI_DICT[int(np.floor(Id/10000))] + "-" +\
+            str(int(np.floor(Id/10)) - 1000*int(np.floor(Id/10000)))
+        if Id % 2 != 0: zai = zai + "m"
+        
+        return zai
+
+
+    def rank(self, parameter="Qt", timepoint=None):
         """function ranks parameter of interest from most important to least 
         important. 
         
@@ -301,11 +311,11 @@ class Results:
         Parameters
         ----------
         parameter : str, optional
-            output of interest to be ranked. The optional are "decayheat",
-            "reactivity", "ingestion", and "inhalation" The default is
-            "decayheat".
+            output of interest to be ranked. The optional are "Qt",
+            "toxicityIngestion", "toxicityInhalation", and At. The default is
+            "Qt".
         timepoint : float, optional
-            specific time point of interest
+            specific time point of interest. 
 
         Returns
         -------
@@ -313,8 +323,24 @@ class Results:
             dictionary containing ranking of parameter
 
         """
+        if timepoint is not None:
+            _ispositive(timepoint, "time point of interest")
         _inlist(parameter, "rank parameter of interest",\
-                ["decayheat", "reactivity", "ingestion", "inhalation"])
-        df = {}
+                ["Qt", "toxicityIngestion", "toxicityInhalation", "At",
+                 "reactivity"])
+
+        Ids, data = getattr(self, "fullId"), getattr(self, parameter)
+        intgrl, zai = [], []
+        
+        if timepoint is None:
+            for i in range(len(data[:,0])): intgrl.append(np.sum(data[i,:]))
+        else:
+            pass
+        
+        #calculate rank
+        for i in Ids: zai.append(self.__id2zai(i))
+        df = pa.DataFrame(data={"Id": Ids, "ZAI": zai, parameter: intgrl})
         
         return df
+        
+        

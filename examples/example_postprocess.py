@@ -9,3 +9,9 @@ from pyIsoDep.functions.postprocessresults import Results
 
 
 res = Results("scenario.h5")
+
+rankQt = res.rank(parameter="Qt")
+rankIngst = res.rank(parameter="toxicityIngestion")
+rankInhal = res.rank(parameter="toxicityInhalation")
+rankAt = res.rank(parameter="At")
+rankRho = res.rank(parameter="reactivity")

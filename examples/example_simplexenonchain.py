@@ -64,7 +64,7 @@ dep.DecayHeat()
 dep.Radiotoxicity()
 dep.Activity()
 dep.Mass()
-
+dep.Reactivity()
 
 # -----------------------------------------------------------------------------
 #                  POST-PROCESS RESULTS

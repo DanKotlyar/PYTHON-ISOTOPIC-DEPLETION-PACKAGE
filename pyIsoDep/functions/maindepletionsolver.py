@@ -63,7 +63,9 @@ class MainDepletion:
 
     def __init__(self, timeframes=0.0, *argv):
         """reset values with a complete list of all the nuclides"""
-
+        
+        self._xsintrp = None
+        
         # empty dictionary to store all the cross section and decay data sets
         xsDataSets = {}
 
@@ -94,6 +96,7 @@ class MainDepletion:
         self._xsDataSets = xsDataSets
         self._timeframes = timeframes
         self._solveTime = None
+        
         # Verify that same IDs and chains are used for all argv (i.e.data sets)
         # ---------------------------------------------------------------------
         if nxssets > 1:
@@ -104,6 +107,7 @@ class MainDepletion:
                     raise ValueError(
                         "fullId for frame {} is not identical to the one in "
                         "frame {}.".format(timeframes[0], timeframe))
+
 
     def SetDepScenario(self, power=None, flux=None, timeUnits="seconds",
                        timesteps=None, timepoints=None):
@@ -192,6 +196,7 @@ class MainDepletion:
         self.power = power
         self.flux = flux
 
+
     def SetInitialComposition(self, ID, N0, vol=1.0):
         """Set initial composition
 
@@ -252,6 +257,7 @@ class MainDepletion:
         self.providedID = ID
         self.volume = vol
 
+
     def SolveDepletion(self, method="cram", xsinterp=False, rtol=1E-10):
         """Solve the Bateman equations that include transmutation and decay
 
@@ -292,7 +298,7 @@ class MainDepletion:
             singleDepletion = expmSolver()
         elif method == "odeint":
             singleDepletion = odeintSolver(rtol=rtol)
-
+            
         if self.power is None and self.flux is None:
             raise ValueError("Either power or flux must be defined when "
                              "SetDepScenario is set.")
@@ -348,6 +354,8 @@ class MainDepletion:
                 
         toc = time.perf_counter()
         self._solveTime = toc - tic
+        self._xsintrp = xsinterp
+
 
     def SolveDecay(self, method="cram", rtol=1E-10):
         """Solve the Bateman equations with only the decay chains
@@ -412,6 +420,7 @@ class MainDepletion:
         toc = time.perf_counter()
         self._solveTime = toc - tic
 
+
     def _getInterpXS(self, currtime, interpFlag):
         """Obtains the transmutation data required to solve depletion"""
 
@@ -454,6 +463,7 @@ class MainDepletion:
 
         return fissE, sigf, transmutationmtx
 
+
     def DecayHeat(self):
         """Calculate decay heat in Watts
 
@@ -481,6 +491,7 @@ class MainDepletion:
         # Calculate Decay heat
         self.Qt = self.At * mtxQ
         self.totalQt = self.Qt.sum(axis=0)
+
 
     def Radiotoxicity(self):
         """Calculate radiotoxicity in Sv
@@ -520,6 +531,7 @@ class MainDepletion:
         self.totalToxIngestion = self.toxicityIngestion.sum(axis=0)
         self.totalToxInhalation = self.toxicityInhalation.sum(axis=0)
 
+
     def Activity(self):
         """Calculate isotopic and total actitvity in Cuire
 
@@ -544,6 +556,7 @@ class MainDepletion:
         self.AtCurie = self.volume * mtxL * self.Nt / BARN_2_CM2 / BQ_2_CURIE
         self.totalAtCurie = self.AtCurie.sum(axis=0)
 
+
     def Mass(self):
         """Calculate isotopic and total masses in grams
 
@@ -564,3 +577,51 @@ class MainDepletion:
         # Mass in grams
         self.massgr = self.volume * mtxAW * self.Nt / NAVO
         self.totalMassgr = self.massgr.sum(axis=0)
+
+
+    def Reactivity(self):
+        """Calculate reactivity worth of each isotope using first order 
+        perturbation theory. 
+
+        Attributes
+        ----------
+        reactivity : 2-dim array
+            Reactivity worth in pcm for all the isotopes as a function of time
+
+        """
+        reactivity = np.zeros(self.Nt.shape)
+        
+        for i in range(len(self.timepoints)):
+            
+            xs = self._xsDataSets[0.0].xsData
+
+            if self._xsintrp:
+                # Find the index of closest data with a time below the current time
+                if (self.timepoints[i] <= self._timeframes).all():
+                    idx0 = 0
+                    idx1 = 0
+                # Find the index of closest data with a time above the current time
+                elif (self.timepoints[i] >= self._timeframes).all():
+                    idx0 = len(self._timeframes) - 1
+                    idx1 = len(self._timeframes) - 1
+                # Current time is in-between exisiting time frames
+                else:
+                    idx0 = np.where(self._timeframes <= self.timepoints[i])[0][-1]
+                    idx1 = np.where(self._timeframes >= self.timepoints[i] )[0][0]    
+        
+                xs0 = self._xsDataSets[self._timeframes[idx0]]
+                xs1 = self._xsDataSets[self._timeframes[idx1]]
+                if idx0 == idx1:
+                    wgt = 0.0
+                else:
+                    wgt = (self.timepoints[i]-self._timeframes[idx0])/\
+                        (self._timeframes[idx1]-self._timeframes[idx0])
+                    
+                xs = (1-wgt)*xs0.xsData + wgt*xs1.xsData
+                            
+            macroXs = self.Nt[:,i].flatten() *\
+                xs[:,1:].sum(axis=1).flatten()/1E-24
+            reactivity[:,i] = 1E+5*(macroXs / macroXs.sum())
+
+        self.reactivity = reactivity
+
