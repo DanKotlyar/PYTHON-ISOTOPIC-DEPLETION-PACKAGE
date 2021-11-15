@@ -75,7 +75,7 @@ res.plot("Nt", timeUnits="hours", isotopes=[531350, 541350],
 res.plot("Qt", timeUnits="hours", isotopes=[541350], ylabel="Flux, n/cm2/s")
 res.plot("flux", ylabel="Flux, n/cm2/s", pltType="semilogx")
 
-res.export("simpleXenon.h5") #export results to hdf5
+res.export("simpleXenon.h5", includeXS=False) #export results to hdf5
 
 
-
+ranked = res.rank(timepoint=26.0, timeUnit="hours")

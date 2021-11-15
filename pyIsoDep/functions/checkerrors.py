@@ -105,6 +105,14 @@ def _ispositive(var, description):
                          .format(description, var))
 
 
+def _iszeropositive(var, description):
+    """checks if the variable is zero or positive"""
+    _isnumber(var, description)
+    if not var >= 0:
+        raise ValueError("{} must be zero or positive and not {}"
+                         .format(description, var))
+
+
 def _isnonnegative(var, description):
     """checks if the variable is positive"""
     _isnumber(var, description)
