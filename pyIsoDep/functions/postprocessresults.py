@@ -57,6 +57,8 @@ class Results:
         for i in attrs:
             try:
                 data = f[key][i][()]
+                if type(data) is bytes:
+                    data = str(data, "utf-8")
                 setattr(self, i, data)
             except:
                 print("{} not found in results".format(i))
@@ -357,7 +359,7 @@ class Results:
             _iszeropositive(timepoint, "time point of interest")
         if timepoint is not None and timeUnit is not None:
             _inlist(timeUnit, "time units", TIME_UNITS_LIST)
-            timepoint = self.__convertTimepoint(timepoint, timeUnit)
+            timepoint = self.__convertTimepoint(timepoint, str(timeUnit))
             
         _inlist(parameter, "rank parameter of interest",\
                 ["Qt", "toxicityIngestion", "toxicityInhalation", "At",
