@@ -34,7 +34,7 @@ mtxFY = [
 
 volume = 332097.750  # volume in cm**3
 
-timepoints = np.linspace(0, 48.0, 24)
+timepoints = np.linspace(0, 48.0, 40)
 power = 330000000.*np.ones(len(timepoints)-1)  # Watts
 
 start_time = datetime.now()
@@ -58,12 +58,13 @@ dep.SetDepScenario(power=power, timeUnits="hours", timepoints=timepoints)
 # set initial composition
 dep.SetInitialComposition(ID, N0, vol=volume)
 # solve the Bateman equations
-dep.SolveDepletion(method="cram")
+dep.SolveDepletion(method="adaptive")
 # Post depletion analysis
 dep.DecayHeat()
 dep.Radiotoxicity()
 dep.Activity()
 dep.Mass()
+dep.Reactivity()
 
 # -----------------------------------------------------------------------------
 #                  POST-PROCESS RESULTS
@@ -71,6 +72,7 @@ dep.Mass()
 res = Results(dep)
 res.plot("Nt", timeUnits="hours", isotopes=[531350, 541350],
          ylabel="Atomic density, #/b/cm")
-
-res.plot("Qt", timeUnits="hours", isotopes=[541350], ylabel="Flux, n/cm2/s")
+res.plot("reactivity", timeUnits="hours", isotopes=[541350], ylabel="Reactivity worth, pcm")
 res.plot("flux", ylabel="Flux, n/cm2/s", pltType="semilogx")
+
+res.export("simpleXenon.h5", includeXS=False) #export results to hdf5

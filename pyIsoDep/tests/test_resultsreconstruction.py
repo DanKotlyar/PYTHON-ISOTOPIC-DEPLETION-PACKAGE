@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
-"""test_maindepletion
+"""test_resultsreconstruction
 
 Tests that a single depletion step is carried out properly.
 The entire sequence from cross section generation to depletion execution is
 tested. Results are compared against pre-generated data using a different code.
 
-Created on Sun Oct 11 07:30:00 2021 @author: Dan Kotlyar
-Last updated on Sun Oct 17 17:30:00 2021 @author: Dan Kotlyar
+Created on Thu Oct 28 08:59:44 2021 @author: Matt Krecicki
+Last updated onThu Oct 28 08:59:44 2021 @author: Matt Krecicki
 
 """
-
 import pytest
 import numpy as np
 from pyIsoDep.functions.maindepletionsolver import MainDepletion
@@ -18,8 +17,8 @@ from pyIsoDep.functions.postprocessresults import Results
 
 from pyIsoDep.tests.pregenerated_xs import flux, ID, N0, sig_c,\
     sig_c2m, sig_n2n, sig_n3n, sig_f, compareNt
-
-
+    
+    
 # -----------------------------------------------------------------------------
 #                            DATA GENERATION
 # -----------------------------------------------------------------------------
@@ -31,10 +30,8 @@ data.ReadData(ID, sig_f=sig_f, sig_c=sig_c, sig_c2m=sig_c2m,
               sig_n2n=sig_n2n, sig_n3n=sig_n3n, flagBarns=False)
 
 
-
-
-def test_cram_depletion():
-    """Test that depletion is carried out properly"""
+def test_reconstruction():
+    """Test that ensure results reconstruction is correct"""
     # -------------------------------------------------------------------------
     #                            DEPLETION
     # -------------------------------------------------------------------------
@@ -52,11 +49,28 @@ def test_cram_depletion():
     dep.Radiotoxicity()
     dep.Activity()
     dep.Mass()
-
-    assert dep.Nt[1656, 1] == pytest.approx(compareNt[1656], rel=0.001)
-
-def test_expm_depletion():
-    """Test that depletion is carried out properly"""
+    dep.Reactivity()
+    
+    #export results to hdf5 file
+    res = Results(dep)
+    res.export("test.h5")
+    
+    #reconstruct results from hdf5 file
+    res2 = Results("test.h5")
+    
+    #compare exported and reconstructed results
+    assert res.N0 == pytest.approx(res2.N0, rel=0.001)
+    assert res.flagPower == res2.flagPower
+    assert res.flux == pytest.approx(res2.flux, rel=0.001)
+    assert res.totalQt == pytest.approx(res2.totalQt, rel=0.001)
+    assert res.decaymtx[25,:] == pytest.approx(res2.decaymtx[25,:], rel=0.001)
+    assert res.Nt[30,:] == pytest.approx(res2.Nt[30,:], rel=0.001)  
+    assert res._xsDataSets[0.0][50,:] ==\
+        pytest.approx(res2._xsDataSets[0.0][50,:], rel=0.001) 
+        
+        
+def test_partial_reconstruction():
+    """Test that ensure results reconstruction is correct"""
     # -------------------------------------------------------------------------
     #                            DEPLETION
     # -------------------------------------------------------------------------
@@ -68,41 +82,31 @@ def test_expm_depletion():
     # set initial composition
     dep.SetInitialComposition(ID, N0, vol=1.0)
     # solve the Bateman equations
-    dep.SolveDepletion(method="expm")
+    dep.SolveDepletion(method="cram")
     # Post depletion analysis
     dep.DecayHeat()
-    dep.Radiotoxicity()
-    dep.Activity()
-    dep.Mass()
-
-    assert dep.Nt[1656, 1] == pytest.approx(compareNt[1656], rel=0.001)
-
-def test_odeint_depletion():
-    """Test that depletion is carried out properly"""
-    # -------------------------------------------------------------------------
-    #                            DEPLETION
-    # -------------------------------------------------------------------------
-    dep = MainDepletion(0.0, data)
-    # define metadata (steps, flux, and so on)
-    dep.SetDepScenario(power=None, flux=[flux], timeUnits="seconds",
-                       timesteps=[6.630851880276299780234694480896E+05],
-                       timepoints=None)
-    # set initial composition
-    dep.SetInitialComposition(ID, N0, vol=1.0)
-    # solve the Bateman equations
-    dep.SolveDepletion(method="odeint")
-    # Post depletion analysis
-    dep.DecayHeat()
-    dep.Radiotoxicity()
-    dep.Activity()
-    dep.Mass()
-
-    assert dep.Nt[1656, 1] == pytest.approx(compareNt[1656], rel=0.001)
-
-
-def test_badMainDepletion():
-    """Errors for the main depletion definitions"""
-
-    with pytest.raises(ValueError, match="Time Frames*"):
-        MainDepletion(0.0, data, data)
-
+    #dep.Radiotoxicity()
+    #dep.Activity()
+    #dep.Mass()
+    dep.Reactivity()
+    
+    #export results to hdf5 file
+    res = Results(dep)
+    res.export("test2.h5")
+    
+    #reconstruct results from hdf5 file
+    res2 = Results("test2.h5")
+    
+    #compare exported and reconstructed results
+    assert res.N0 == pytest.approx(res2.N0, rel=0.001)
+    assert res.flagPower == res2.flagPower
+    assert res.flux == pytest.approx(res2.flux, rel=0.001)
+    assert res.totalQt == pytest.approx(res2.totalQt, rel=0.001)
+    assert res.decaymtx[25,:] == pytest.approx(res2.decaymtx[25,:], rel=0.001)
+    assert res.Nt[30,:] == pytest.approx(res2.Nt[30,:], rel=0.001)  
+    assert res._xsDataSets[0.0][50,:] ==\
+        pytest.approx(res2._xsDataSets[0.0][50,:], rel=0.001) 
+        
+        
+test_partial_reconstruction()        
+        

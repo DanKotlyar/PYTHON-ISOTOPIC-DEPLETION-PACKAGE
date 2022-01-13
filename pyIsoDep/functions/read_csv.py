@@ -4,7 +4,7 @@
 Read the different csv files
 
 Created on Mon Oct 11 21:30:00 2021 @author: Dan Kotlyar
-Last updated on Mon Oct 11 21:45:00 2021 @author: Dan Kotlyar
+Last updated on Mon Oct 11 08:35:00 2021 @author: Matt Krecicki
 
 """
 
@@ -13,8 +13,8 @@ import pandas as pd
 
 
 def ReadCsv(csvFile):
-
-    data = pd.read_csv('bootstrap.csv')
+    
+    data = pd.read_csv(csvFile)
     ID = np.array(data['ZAID'], dtype=int)
     xsTypes = np.array(data['MT'], dtype=int)
     xsVals = np.array(data["XS [barns]"], dtype=float)
@@ -28,7 +28,7 @@ def ReadCsv(csvFile):
 
     # obtain all the cross section types
     numMTs = np.array([102, 18, 107])
-
+    
     for idx, numMT in enumerate(numMTs):
         vals, idxFull, idx0 =\
             np.intersect1d(fullID, ID[xsTypes == numMT], assume_unique=False,
@@ -36,7 +36,7 @@ def ReadCsv(csvFile):
         if idx == 0:
             xsTable[idxFull, 1] = N0[xsTypes == numMT][idx0]
         xsTable[idxFull, idx+2] = xsVals[xsTypes == numMT][idx0]
-
+        
     idxFields = {"ID": 0, "N0": 1, "sig_c": 2, "sig_alpha": 3, "sig_f": 4}
 
     return xsTable, idxFields
