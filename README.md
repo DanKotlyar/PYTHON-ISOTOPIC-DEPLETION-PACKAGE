@@ -41,6 +41,9 @@ Follow the next execution line:
 
 `<python -m pip install -upgrade pip setuptools wheel>`
 
+You can also install the package with a develop mode, which is useful if you want to make constant changes and debug:
+<python setup.py develop --user>
+
 
 Execution
 =========
