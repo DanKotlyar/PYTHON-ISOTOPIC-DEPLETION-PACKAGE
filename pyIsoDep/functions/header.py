@@ -98,6 +98,8 @@ RADIOTOXICITY_ATTR = ["Nt", "lmbda", "inhalation", "ingestion", "volume"]
 # Attributes that must exist to calculate mass
 MASS_ATTR = ["Nt", "AW", "volume"]
 
+# Data required for interpolation
+INTRP_ATTR = ["fymtx", "EfissJoule", "xsData", "transmutationmtx"]
 
 #hdf5 output file atrributes list
 HDF5_GROUPS = {"metaData": ["nIsotopes", "AW", "fullId", "timepoints",

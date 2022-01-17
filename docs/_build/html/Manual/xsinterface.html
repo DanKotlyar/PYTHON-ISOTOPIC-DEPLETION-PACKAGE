@@ -1,0 +1,280 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross sections Interface &#8212; pyIsoDep 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Examples" href="../Examples/index.html" />
+    <link rel="prev" title="Data Stored on Results" href="resstorage.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="cross-sections-interface">
+<span id="xsinterface"></span><h1>Cross sections Interface<a class="headerlink" href="#cross-sections-interface" title="Permalink to this headline">¶</a></h1>
+<p>An interface to store all the cross-section sets for a range of operational
+conditions (up to three dependencies).
+The interface also contains interpolation techniques to allow constructing
+a new cross section set for given operational conditions traces.</p>
+<p>This interface is used to link between cross sections generated in
+branch-off calculations for multiple operational points and the actual
+operational regime. The interface allows to generate on-the-fly cross
+section sets that represent different time-dependent scenarios.</p>
+<ol class="arabic simple">
+<li><p>The user is required to build cross sections objects in advance.</p></li>
+<li><p>These objects must be linked to operational conditions.</p></li>
+</ol>
+<p><strong>Load module</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyIsoDep.functions.xsinterface</span> <span class="kn">import</span> <span class="n">XsInterface</span>
+</pre></div>
+</div>
+<p><strong>Execution</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">xs</span> <span class="o">=</span> <span class="n">XsInterface</span><span class="p">(</span><span class="n">numdepn</span><span class="p">,</span> <span class="n">numpert</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span> <span class="n">xssets</span><span class="p">,</span> <span class="n">extrpFlag</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where,</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 87%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Input</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>numdepn</p></td>
+<td><p>Number of dependencies, int</p></td>
+</tr>
+<tr class="row-odd"><td><p>numpert</p></td>
+<td><p>Total number of perturbations, int</p></td>
+</tr>
+<tr class="row-even"><td><p>states</p></td>
+<td><p>The description of all the perturbations in terms of the dependencies</p></td>
+</tr>
+<tr class="row-odd"><td><p>xssets</p></td>
+<td><p>Cross sections objects</p></td>
+</tr>
+<tr class="row-even"><td><p>extrpFlag</p></td>
+<td><p>A flag to indicate if extrapolation is allowed, default is True</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">states</span></code> is a 2-dimensional matrix. Columns correpond to the state [T1, P1, ND1] and the rows correspond to different perturbations.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xssets</span></code> is a <code class="docutils literal notranslate"><span class="pre">TransmutationData</span></code> object.</p></li>
+<li><p>The interpolation is always linear. Therefore, having more pre-generated points is recommended.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">numdepn</span></code> higher than 3 is not supported in the current version.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">states</span></code> must have a complete set. For example, [[T1, P1], [T1, P2], [T2, P1], [T2, P2]].</p></li>
+</ul>
+</div>
+<p><strong>Example: 1-dim</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">xs</span> <span class="o">=</span> <span class="n">XsInterface</span><span class="p">(</span><span class="n">numdepn</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">numpert</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">states</span><span class="o">=</span><span class="p">[[</span><span class="mi">500</span><span class="p">],</span> <span class="p">[</span><span class="mi">600</span><span class="p">],</span> <span class="p">[</span><span class="mi">700</span><span class="p">]],</span>
+                 <span class="n">xssets</span><span class="o">=</span><span class="p">[</span><span class="n">xs500</span><span class="p">,</span> <span class="n">xs600</span><span class="p">,</span> <span class="n">xs700</span><span class="p">],</span> <span class="n">extrpFlag</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Example: 2-dim</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">xs</span> <span class="o">=</span> <span class="n">XsInterface</span><span class="p">(</span><span class="n">numdepn</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">numpert</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+           <span class="n">states</span><span class="o">=</span><span class="p">[[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
+                   <span class="p">[</span><span class="mi">600</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">600</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">600</span><span class="p">,</span> <span class="mi">4</span><span class="p">]],</span>
+           <span class="n">xssets</span><span class="o">=</span><span class="p">[</span><span class="n">xs1</span><span class="p">,</span> <span class="n">xs2</span><span class="p">,</span> <span class="n">xs3</span><span class="p">,</span> <span class="n">xs4</span><span class="p">,</span> <span class="n">xs5</span><span class="p">,</span> <span class="n">xs6</span><span class="p">],</span> <span class="n">extrpFlag</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Example: 3-dim</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">xs</span> <span class="o">=</span> <span class="n">XsInterface</span><span class="p">(</span><span class="n">numdepn</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">numpert</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span>
+           <span class="n">states</span><span class="o">=</span><span class="p">[[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">1E-05</span><span class="p">],</span> <span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">2E-05</span><span class="p">],</span> <span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">3E-05</span><span class="p">],</span>
+                   <span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mf">1E-05</span><span class="p">],</span> <span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mf">2E-05</span><span class="p">],</span> <span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mf">3E-05</span><span class="p">],</span>
+                   <span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">1E-05</span><span class="p">],</span> <span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">2E-05</span><span class="p">],</span> <span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">3E-05</span><span class="p">],</span>
+                   <span class="p">[</span><span class="mi">600</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">1E-05</span><span class="p">],</span> <span class="p">[</span><span class="mi">600</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">2E-05</span><span class="p">],</span> <span class="p">[</span><span class="mi">600</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">3E-05</span><span class="p">],</span>
+                   <span class="p">[</span><span class="mi">600</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mf">1E-05</span><span class="p">],</span> <span class="p">[</span><span class="mi">600</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mf">2E-05</span><span class="p">],</span> <span class="p">[</span><span class="mi">600</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mf">3E-05</span><span class="p">],</span>
+                   <span class="p">[</span><span class="mi">600</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">1E-05</span><span class="p">],</span> <span class="p">[</span><span class="mi">600</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">2E-05</span><span class="p">],</span> <span class="p">[</span><span class="mi">600</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">3E-05</span><span class="p">]],</span>
+           <span class="n">xssets</span><span class="o">=</span><span class="p">[</span><span class="n">xs1</span><span class="p">,</span> <span class="n">xs2</span><span class="p">,</span> <span class="n">xs3</span><span class="p">,</span> <span class="n">xs4</span><span class="p">,</span> <span class="n">xs5</span><span class="p">,</span> <span class="n">xs6</span><span class="p">,</span> <span class="n">xs7</span><span class="p">,</span> <span class="n">xs8</span><span class="p">,</span> <span class="n">xs9</span><span class="p">,</span> <span class="n">xs10</span><span class="p">,</span>
+                   <span class="n">xs11</span><span class="p">,</span> <span class="n">xs12</span><span class="p">,</span> <span class="n">xs13</span><span class="p">,</span> <span class="n">xs14</span><span class="p">,</span> <span class="n">xs15</span><span class="p">,</span> <span class="n">xs16</span><span class="p">,</span> <span class="n">xs17</span><span class="p">,</span> <span class="n">xs18</span><span class="p">],</span> <span class="n">extrpFlag</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="settimetrace">
+<h2>setTimeTrace<a class="headerlink" href="#settimetrace" title="Permalink to this headline">¶</a></h2>
+<p>The use can feed an operational trace for each of the dependencies
+defined in the problem. If only one dependency exists (e.g. pressure),
+only a pressure trace as a function needs to be provided.
+If more than one dependnecy exists then separate vectors for each
+dependnecy are required.</p>
+<p><strong>Execution</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">timepoints</span><span class="p">,</span> <span class="n">xsTimeSets</span> <span class="o">=</span> <span class="n">xs</span><span class="o">.</span><span class="n">setTimeTrace</span><span class="p">(</span><span class="n">timepoints</span><span class="p">,</span> <span class="o">*</span><span class="n">argv</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The following inputs can be inputted to the method:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 84%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Input</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>timepoints</p></td>
+<td><p>The time points at which interpolated data will be created.</p></td>
+</tr>
+<tr class="row-odd"><td><p>argv</p></td>
+<td><p>Multiple time-dependent traces for each dependency</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>The number of trace vectors must correspond to the number of dependencies in the problem.</p></li>
+<li><p>All the provided vectors must be of equal size.</p></li>
+<li><p>The first entrence will always represent time, and the following parameters represent the time-dependent traces.</p></li>
+</ul>
+</div>
+<p>The method stores attributes/data on the object, but also returns:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 86%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Output</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>timepoints</p></td>
+<td><p>Time points</p></td>
+</tr>
+<tr class="row-odd"><td><p>xsTimeSets</p></td>
+<td><p>Multiple time-dependent <code class="docutils literal notranslate"><span class="pre">TransmutationData</span></code> objects needed for depletion</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example: 1-dependency</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">timepoints</span><span class="p">,</span> <span class="n">xsTimeSets</span> <span class="o">=</span> <span class="n">xs</span><span class="o">.</span><span class="n">setTimeTrace</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">7.0</span><span class="p">],</span> <span class="p">[</span><span class="mi">525</span><span class="p">,</span> <span class="mi">550</span><span class="p">,</span> <span class="mi">575</span><span class="p">])</span>
+</pre></div>
+</div>
+<p><strong>Example: 2-dependencies</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">timepoints</span><span class="p">,</span> <span class="n">xsTimeSets</span> <span class="o">=</span> <span class="n">xs</span><span class="o">.</span><span class="n">setTimeTrace</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">550</span><span class="p">],</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">])</span>
+</pre></div>
+</div>
+<p><strong>Example: 3-dependencies</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">timepoints</span><span class="p">,</span> <span class="n">xsTimeSets</span> <span class="o">=</span>\
+<span class="n">xs</span><span class="o">.</span><span class="n">setTimeTrace</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">525</span><span class="p">,</span> <span class="mi">550</span><span class="p">],</span> <span class="p">[</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.5E-05</span><span class="p">,</span> <span class="mf">2.5E-05</span><span class="p">])</span>
+</pre></div>
+</div>
+<p><strong>Very Important Note</strong></p>
+<p>The <code class="docutils literal notranslate"><span class="pre">timepoints</span></code>, and <code class="docutils literal notranslate"><span class="pre">xsTimeSets</span></code> can  be used to define the depletion data in the following manner:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span> <span class="o">=</span> <span class="n">MainDepletion</span><span class="p">(</span><span class="n">timepoints</span><span class="p">,</span> <span class="o">*</span><span class="n">xsTimeSets</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyIsoDep</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Project Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributors.html">Developer Team</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User’s Manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../develop/index.html">Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">User’s Manual</a><ul>
+      <li>Previous: <a href="resstorage.html" title="previous chapter">Data Stored on <code class="docutils literal notranslate"><span class="pre">Results</span></code></a></li>
+      <li>Next: <a href="../Examples/index.html" title="next chapter">Examples</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Dan Kotlyar.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/Manual/xsinterface.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
