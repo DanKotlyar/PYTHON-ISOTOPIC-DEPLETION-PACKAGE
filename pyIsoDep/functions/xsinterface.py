@@ -143,6 +143,13 @@ class XsInterface:
             all the interpolated xs sets corresponding to ``timepoints``.
             Keys are the time points and values are xs objects.
 
+        Returns
+        -------
+        timepoints : array
+            the time points at which interpolated data will be created.
+        *xsTimeSets : objects
+            the cross sections objects corresponding to each time-point
+
         Raises
         ------
         TypeError
@@ -154,7 +161,8 @@ class XsInterface:
 
         Examples
         --------
-        >>> xs = complete....
+        >>> timepoints, xsTimeSets = xs.setTimeTrace(
+                                     [0, 3.5], [500, 550], [3.0, 3.5])
 
         """
 
@@ -181,6 +189,9 @@ class XsInterface:
         else:
             raise ValueError("Only up to 3 dependencies are supported and not"
                              " {}".format(self.numdepn))
+
+        self.timepoints = timepts
+        return self.timepoints, self.xsTimeSets.values()
 
     def _LinearSplineInterp(self, traces, timepts):
         """Interpolate the data for a single dependency"""

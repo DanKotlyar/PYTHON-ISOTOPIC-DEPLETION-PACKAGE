@@ -52,7 +52,7 @@ fullthrust.ReadData(ID=xsTable[:, 0], sig_f=xsTable[:, 3], sig_c=xsTable[:, 2],
 xs = XsInterface(numdepn=1, numpert=3, states=[[500], [600], [700]],
                  xssets=[bootstrap, tempramp, fullthrust], extrpFlag=True)
 
-xs.setTimeTrace([0, 3.5, 7.0], [525, 550, 575])
+timepoints, xsTimeSets = xs.setTimeTrace([0, 3.5, 7.0], [525, 550, 575])
 
 
 # -------------------------------------------------------------------------
@@ -64,7 +64,7 @@ xs = XsInterface(numdepn=2, numpert=6, states=[[500, 2], [500, 3], [500, 4],
                   xssets=[bootstrap, bootstrap, bootstrap, bootstrap, bootstrap,
                           bootstrap], extrpFlag=True)
 
-xs.setTimeTrace([0, 3.5], [500, 550], [3.0, 3.5])
+timepoints, xsTimeSets = xs.setTimeTrace([0, 3.5], [500, 550], [3.0, 3.5])
 
 # -------------------------------------------------------------------------
 #                            XS Interface (TriLinear Interpolation/Extrp.)
@@ -82,6 +82,7 @@ xs = XsInterface(numdepn=3, numpert=18,
                          bootstrap, bootstrap, bootstrap, bootstrap, bootstrap,
                          bootstrap, bootstrap, bootstrap], extrpFlag=True)
 
-xs.setTimeTrace([0, 3.5], [525, 550], [2.5, 3.5], [1.5E-05, 2.5E-05])
+timepoints, xsTimeSets =\
+    xs.setTimeTrace([0, 3.5], [525, 550], [2.5, 3.5], [1.5E-05, 2.5E-05])
 
 a = 1

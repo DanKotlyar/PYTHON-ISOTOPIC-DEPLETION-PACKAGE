@@ -14,6 +14,11 @@ The following sequence describes all the stages required to
 perform a transmutation and/or decay simulation.
 
 	1. :ref:`Decay and transmutation data generation <datagen>`: define a single or multiple ``TransmutationData`` containers.
+		
+		1.1. The user can move directly to step 2, or
+		
+		1.2. Define pre-generated cross sections sets and time-dependent traces using :ref:`xsinterface`.
+		
 	2. :ref:`Execute depletion <deplete>`: set depletion or decay history, and solve the Bateman equations.
 	3. :ref:`Post-process results <postprocess>`: a dedicated container to store only result attributes, and methods to obtain specific values and plot results.
 
@@ -37,12 +42,20 @@ Abstract Example
 
 	data = TransmutationData(...)
 	data.ReadData(...)
+
+**Pre-generated XS data and traces** (not mandatory)
+
+.. code::
+
+	xs = XsInterface(..., data)
+	timepoints, xsTimeSets = xs.setTimeTrace(...)
+
 	
 **Calling Depletion**
 
 .. code::
 
-	dep = MainDepletion(..., data)
+	dep = MainDepletion(..., data or xsTimeSets)
 	dep.SetDepScenario(...)
 	dep.SetInitialComposition(...)
 	dep.SolveDepletion(method="cram")
@@ -69,6 +82,7 @@ Abstract Example
    predepletion.rst
    postdepletion.rst
    resstorage.rst
+   xsinterface.rst
 
 
 	
