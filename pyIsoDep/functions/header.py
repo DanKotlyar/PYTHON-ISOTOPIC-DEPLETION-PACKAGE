@@ -31,7 +31,8 @@ TIME_UNITS_CONV_MTX = [[1.0,       60.0,     3600.0, 86400.0],
 #                      DEFAULT OPTIONS
 # -----------------------------------------------------------------------------
 
-DEPLETION_METHODS = ["cram", "expm", "odeint", "adaptive"]  # current depletion options
+# current depletion options
+DEPLETION_METHODS = ["cram", "expm", "odeint", "adaptive"]
 H5_PATH = "bgcore_data.h5"              # Pre-generated librray
 
 # -----------------------------------------------------------------------------
@@ -73,6 +74,7 @@ DATA_ATTR = {
     "EfissJoule": "Energy per fission in Joules",
     "xsData": "Cross section data matrix",
     "transmutationmtx": "Transmutation matrix without decay",
+    "nu": "Number of neutrons emitted per fission"
     }
 
 # Attributes that must exist for transmutation and decay calculations
@@ -101,7 +103,7 @@ MASS_ATTR = ["Nt", "AW", "volume"]
 # Data required for interpolation
 INTRP_ATTR = ["fymtx", "EfissJoule", "xsData", "transmutationmtx"]
 
-#hdf5 output file atrributes list
+# hdf5 output file atrributes list
 HDF5_GROUPS = {"metaData": ["nIsotopes", "AW", "fullId", "timepoints",
                             "timesteps", "timeunits", "usertimesteps",
                             "flagPower", "_timeframes", "providedID",
@@ -110,15 +112,23 @@ HDF5_GROUPS = {"metaData": ["nIsotopes", "AW", "fullId", "timepoints",
                            "massgr", "totalAtCurie", "totalMassgr", "totalQt",
                            "totalToxIngestion", "totalToxInhalation",
                            "toxicityIngestion", "toxicityInhalation",
-                           "reactivity"],
+                           "Rho", "dRho", "dRhoToRho"],
                "xsData": ["fullId", "nIsotopes", "AW", "Q", "BR", "lmbda",
                           "decaymtx", "ingestion", "inhalation", "fymtx",
                           "EfissMeV", "EfissJoule", "xsData",
                           "transmutationmtx"],
-               "deplData":["BR", "decaymtx", "ingestion", "inhalation",
-                           "lmbda", ],
+               "deplData": ["BR", "decaymtx", "ingestion", "inhalation",
+                            "lmbda", ],
                "inital": ["volume", "N0", "providedN0"]}
 
+
+INTERVAL_ATTRIBUTES = ["flux", "power", "keff", "Rho", "dRho", "dRhoToRho"]
+RANK_PARAMETERS = ["Qt", "toxicityIngestion", "toxicityInhalation", "At",
+                   "dRho", "dRhoToRho"]
+
+RANK_ATTRIBUTES = ["Qt", "toxicityIngestion", "toxicityInhalation", "At",
+                   "dRho", "dRhoToRho", "AW", "fullId", "Nt", "AtCurie",
+                   "massgr", "Q", "BR", "lmbda", "EfissMeV", "EfissJoule"]
 
 # -----------------------------------------------------------------------------
 #                      Isotope name conversion dictionary

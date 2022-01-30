@@ -25,6 +25,8 @@ from pyIsoDep.functions.header import NAVO, BQ_2_CURIE,\
     TRANSMUATION_ATTR, DECAY_HEAT_ATTR, RADIOTOXICITY_ATTR, ACTIVITY_ATTR,\
     MASS_ATTR
 
+TO_PCM = 1E+5  # convert reactivity to pcm
+
 
 class MainDepletion:
     """A class to perform depletion or decay analysis
@@ -63,9 +65,9 @@ class MainDepletion:
 
     def __init__(self, timeframes=0.0, *argv):
         """reset values with a complete list of all the nuclides"""
-        
+
         self._xsintrp = None
-        
+
         # empty dictionary to store all the cross section and decay data sets
         xsDataSets = {}
 
@@ -85,6 +87,8 @@ class MainDepletion:
                     print("No attribute <{}> in data".format(attr))
                 elif attr in DECAY_EXPECTED_ATTR and timeIdx == 0:
                     setattr(self, attr, getattr(data, attr))
+                elif attr == "nu" and timeIdx == 0:
+                    setattr(self, attr, getattr(data, attr))
             for attr in DECAY_MUST_ATTR:
                 if not hasattr(self, attr):
                     raise ValueError("No attribute <{}> in data".format(attr))
@@ -96,7 +100,7 @@ class MainDepletion:
         self._xsDataSets = xsDataSets
         self._timeframes = timeframes
         self._solveTime = None
-        
+
         # Verify that same IDs and chains are used for all argv (i.e.data sets)
         # ---------------------------------------------------------------------
         if nxssets > 1:
@@ -107,7 +111,6 @@ class MainDepletion:
                     raise ValueError(
                         "fullId for frame {} is not identical to the one in "
                         "frame {}.".format(timeframes[0], timeframe))
-
 
     def SetDepScenario(self, power=None, flux=None, timeUnits="seconds",
                        timesteps=None, timepoints=None):
@@ -196,7 +199,6 @@ class MainDepletion:
         self.power = power
         self.flux = flux
 
-
     def SetInitialComposition(self, ID, N0, vol=1.0):
         """Set initial composition
 
@@ -257,7 +259,6 @@ class MainDepletion:
         self.providedID = ID
         self.volume = vol
 
-
     def SolveDepletion(self, method="cram", xsinterp=False, rtol=1E-10):
         """Solve the Bateman equations that include transmutation and decay
 
@@ -288,7 +289,7 @@ class MainDepletion:
         >>> dep.SetInitialComposition([541350, 922350], [0.0, 0.021])
         >>> dep.SolveDepletion("cram")
         """
-        
+
         # Check potential errors
         # ---------------------------------------------------------------------
         _inlist(method, "Method to solve Bateman eqs", DEPLETION_METHODS)
@@ -298,7 +299,7 @@ class MainDepletion:
             singleDepletion = expmSolver()
         elif method == "odeint":
             singleDepletion = odeintSolver(rtol=rtol)
-            
+
         if self.power is None and self.flux is None:
             raise ValueError("Either power or flux must be defined when "
                              "SetDepScenario is set.")
@@ -313,22 +314,29 @@ class MainDepletion:
         # Nt will store the concentrations as a function of time
         self.Nt = np.zeros((self.nIsotopes, self.nsteps + 1))
         self.Nt[:, 0] = self.N0  # initial concentrations
-        tic = time.perf_counter() #start timer
-        
-        if method == "adaptive": #if adaptive time mesh required solve problem
+        # Nt will store all the weighted cross sections as a function of time
+        self.XS = np.zeros((self.nIsotopes, len(IDX_XS), self.nsteps + 1))
+
+        tic = time.perf_counter()  # start timer
+
+        if method == "adaptive":  # if adaptive time mesh required
             adptDepletion = adaptiveOdeintSolver(self, xsinterp, rtol=rtol)
             adptDepletion.solve()
             self = adptDepletion.dep
             toc = time.perf_counter()
             self._solveTime = toc - tic
             return
-        
+
         for idx, dt in enumerate(self.timesteps):
 
             # Obtain the interpolated fission energy, xs, and transmutation mtx
             # -----------------------------------------------------------------
-            fissE, sigf, transmutationmtx =\
+            fissE, sigf, transmutationmtx, xsTable =\
                 self._getInterpXS(self.timepoints[idx], xsinterp)
+
+            # Store the weighted cross sections:
+            # -----------------------------------------------------------------
+            self.XS[:, :, idx] = xsTable
 
             # flux is used directly
             # -----------------------------------------------------------------
@@ -351,11 +359,10 @@ class MainDepletion:
             # -----------------------------------------------------------------
             self.Nt[:, idx+1] =\
                 singleDepletion.solve(mtxA, self.Nt[:, idx], dt)
-                
+
         toc = time.perf_counter()
         self._solveTime = toc - tic
         self._xsintrp = xsinterp
-
 
     def SolveDecay(self, method="cram", rtol=1E-10):
         """Solve the Bateman equations with only the decay chains
@@ -398,15 +405,15 @@ class MainDepletion:
         self.Nt = np.zeros((self.nIsotopes, self.nsteps + 1))
         self.Nt[:, 0] = self.N0  # initial concentrations
         tic = time.perf_counter()
-        
-        if method == "adaptive": #if adaptive time mesh required solve problem
+
+        if method == "adaptive":  # if adaptive time mesh required
             adptDepletion = adaptiveOdeintSolver(self, False, rtol=rtol)
             adptDepletion.solve()
             self = adptDepletion.dep
             toc = time.perf_counter()
             self._solveTime = toc - tic
             return
-        
+
         for idx, dt in enumerate(self.timesteps):
 
             # define the overall matrix to represent Bateman equations
@@ -419,7 +426,6 @@ class MainDepletion:
                 singleDepletion.solve(mtxA, self.Nt[:, idx], dt)
         toc = time.perf_counter()
         self._solveTime = toc - tic
-
 
     def _getInterpXS(self, currtime, interpFlag):
         """Obtains the transmutation data required to solve depletion"""
@@ -444,6 +450,7 @@ class MainDepletion:
             fissE = data.EfissJoule  # fission energy in joules
             sigf = data.xsData[:, IDX_XS["f"]] / BARN_2_CM2  # fission xs barns
             transmutationmtx = data.transmutationmtx
+            xsTable = data.xsData
         else:
             wgt =\
                 (currtime-timeframes[idx0])/(timeframes[idx1]-timeframes[idx0])
@@ -460,9 +467,11 @@ class MainDepletion:
             fissE = (1-wgt)*fissE0 + wgt*fissE1
             transmutationmtx =\
                 (1-wgt)*transmutationmtx0 + wgt*transmutationmtx1
+            # weighted cross sections
+            xsTable = (1-wgt)*data0.xsData + wgt*data0.xsData
+            xsTable[:, 0] = data0.xsData[:, 0]
 
-        return fissE, sigf, transmutationmtx
-
+        return fissE, sigf, transmutationmtx, xsTable
 
     def DecayHeat(self):
         """Calculate decay heat in Watts
@@ -491,7 +500,6 @@ class MainDepletion:
         # Calculate Decay heat
         self.Qt = self.At * mtxQ
         self.totalQt = self.Qt.sum(axis=0)
-
 
     def Radiotoxicity(self):
         """Calculate radiotoxicity in Sv
@@ -531,7 +539,6 @@ class MainDepletion:
         self.totalToxIngestion = self.toxicityIngestion.sum(axis=0)
         self.totalToxInhalation = self.toxicityInhalation.sum(axis=0)
 
-
     def Activity(self):
         """Calculate isotopic and total actitvity in Cuire
 
@@ -556,7 +563,6 @@ class MainDepletion:
         self.AtCurie = self.volume * mtxL * self.Nt / BARN_2_CM2 / BQ_2_CURIE
         self.totalAtCurie = self.AtCurie.sum(axis=0)
 
-
     def Mass(self):
         """Calculate isotopic and total masses in grams
 
@@ -578,50 +584,53 @@ class MainDepletion:
         self.massgr = self.volume * mtxAW * self.Nt / NAVO
         self.totalMassgr = self.massgr.sum(axis=0)
 
-
-    def Reactivity(self):
-        """Calculate reactivity worth of each isotope using first order 
-        perturbation theory. 
+    def Reactivity(self, nonLeakageP=1.0):
+        """Isotopic reactivity worth using first order perturbation theory.
 
         Attributes
         ----------
-        reactivity : 2-dim array
+        reactivityworth : 2-dim array
             Reactivity worth in pcm for all the isotopes as a function of time
+        reactivity : 1-dim array
+            Total reactivity in pcm
 
         """
-        reactivity = np.zeros(self.Nt.shape)
-        
-        for i in range(len(self.timepoints)):
-            
-            xs = self._xsDataSets[0.0].xsData
 
-            if self._xsintrp:
-                # Find the index of closest data with a time below the current time
-                if (self.timepoints[i] <= self._timeframes).all():
-                    idx0 = 0
-                    idx1 = 0
-                # Find the index of closest data with a time above the current time
-                elif (self.timepoints[i] >= self._timeframes).all():
-                    idx0 = len(self._timeframes) - 1
-                    idx1 = len(self._timeframes) - 1
-                # Current time is in-between exisiting time frames
-                else:
-                    idx0 = np.where(self._timeframes <= self.timepoints[i])[0][-1]
-                    idx1 = np.where(self._timeframes >= self.timepoints[i] )[0][0]    
-        
-                xs0 = self._xsDataSets[self._timeframes[idx0]]
-                xs1 = self._xsDataSets[self._timeframes[idx1]]
-                if idx0 == idx1:
-                    wgt = 0.0
-                else:
-                    wgt = (self.timepoints[i]-self._timeframes[idx0])/\
-                        (self._timeframes[idx1]-self._timeframes[idx0])
-                    
-                xs = (1-wgt)*xs0.xsData + wgt*xs1.xsData
-                            
-            macroXs = self.Nt[:,i].flatten() *\
-                xs[:,1:].sum(axis=1).flatten()/1E-24
-            reactivity[:,i] = 1E+5*(macroXs / macroXs.sum())
+        abs_xs = np.zeros((self.nIsotopes, self.nsteps))
+        fiss_xs = np.zeros((self.nIsotopes, self.nsteps))
+        self.dRho = np.zeros((self.nIsotopes, self.nsteps))
+        self.dRhoToRho = np.zeros((self.nIsotopes, self.nsteps))
+        self.Rho = np.zeros(self.nsteps)
+        self.keff = np.zeros(self.nsteps)
 
-        self.reactivity = reactivity
+        if self.nu is None:
+            raise ValueError("Attribute nu does not exist. Please define in "
+                             "Transmutation Data.")
 
+        for i in range(self.nsteps):
+            abs_xs[:, i] = self.XS[:, IDX_XS['abs'], i]
+            fiss_xs[:, i] = self.XS[:, IDX_XS['f'], i]
+
+            # Multiplication factor at the specific time point
+            self.keff[i] = nonLeakageP *\
+                (self.Nt[:, i] * self.nu * fiss_xs[:, i]).sum() /\
+                (self.Nt[:, i] * abs_xs[:, i]).sum()
+
+            # Total reactivity at the specific time point
+            self.Rho[i] = TO_PCM * (1 - 1/self.keff[i])
+
+            # Multiplication factor without the isotope j
+            keff_wIsot = np.zeros(self.nIsotopes)
+            for j in range(self.nIsotopes):
+                keff_wIsot[j] =\
+                    nonLeakageP *\
+                    ((self.Nt[:, i] * self.nu * fiss_xs[:, i]).sum() -
+                     self.Nt[j, i] * self.nu[j] * fiss_xs[j, i]) /\
+                    ((self.Nt[:, i] * abs_xs[:, i]).sum() -
+                     self.Nt[j, i] * abs_xs[j, i])
+            # reactivity without the isotope j
+            rho_wIsot = TO_PCM * (1 - 1/keff_wIsot)
+
+            # reactivity worth
+            self.dRho[:, i] = self.Rho[i] - rho_wIsot
+            self.dRhoToRho[:, i] = self.dRho[:, i] / self.Rho[i]

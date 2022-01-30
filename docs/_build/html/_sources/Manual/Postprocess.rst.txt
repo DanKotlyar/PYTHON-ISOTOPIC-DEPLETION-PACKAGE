@@ -12,6 +12,10 @@ Input					Description
 =================== ==========================================
 :ref:`getvalues`	  Obtain the values of a specific property
 ------------------- ------------------------------------------
+:ref:`export`	  		Export results to hdf5 file
+------------------- ------------------------------------------
+:ref:`isotope_rank`	Rank isotopes according to their signficance
+------------------- ------------------------------------------
 :ref:`plot`	      	Plot time-dependent results
 =================== ==========================================
 
@@ -166,4 +170,59 @@ newFig				Boolean flag to indicate whether a new figure should be created or an 
 	res.plot("flux", ylabel="Flux, n/cm2/s", pltType="semilogx")
 	
 
+.. _isotope_rank:
 
+
+IsotopicRank
+^^^^^^^^^^^^
+
+Ranks attribute from most important to least important
+
+.. code::
+
+	res.IsotopicRank(attribute, timepoint=None, timeIdx=None, absFlag=True)
+	
+where,
+
+============= ==========================================
+Input					Description
+============= ==========================================
+attribute			The name of the property (provided as a string)
+------------- ------------------------------------------
+timepoint			Specific time point of interest.
+------------- ------------------------------------------
+timeIdx				Specific time index of interest.
+------------- ------------------------------------------
+absFlag				Flag to indicate whether the ranking is according to absolute values or not. Default is True.
+============= ==========================================
+
+.. Note::
+
+	* Either ``timepoint`` or ``timeIdx`` should be provided. If both are provided then the ``timepoint`` is search first. If none are provided then the last step is taken for ranking.
+
+
+
+**Examples:**
+
+* Rank the decay heat according to a specific time-point:
+
+.. code::
+
+	res = Results(dep)
+	sortIds, sortQts = res.IsotopicRank("Qt", timepoint=30.0)
+	
+* Rank according to BR:
+
+.. code::
+
+	sortIds, sortQts = res.IsotopicRank("BR")
+
+
+	
+.. _export:
+
+
+Export
+^^^^^^
+
+To be completed. Spill all results to hhdf5 file.

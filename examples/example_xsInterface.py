@@ -52,7 +52,7 @@ fullthrust.ReadData(ID=xsTable[:, 0], sig_f=xsTable[:, 3], sig_c=xsTable[:, 2],
 xs = XsInterface(numdepn=1, numpert=3, states=[[500], [600], [700]],
                  xssets=[bootstrap, tempramp, fullthrust], extrpFlag=True)
 
-timepoints, xsTimeSets = xs.setTimeTrace([0, 3.5, 7.0], [525, 550, 575])
+timepoints, xsTimeSets = xs.setTimeTrace([0, 3.5, 7.0], [525, 550, 725])
 
 
 # -------------------------------------------------------------------------

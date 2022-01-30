@@ -89,6 +89,7 @@ The hdf5 file also includes fission yields and branching ratios.</p>
 \[\bar{fy} = w_{fy}fy_{thermal} + (1-w_{fy})fy_{fast}\]</div>
 </div></blockquote>
 </li>
+<li><p>The same weighting procedure is applied for the fast and thermal neutrons emitted per fission (part of the data library).</p></li>
 </ul>
 </div>
 <p><strong>Examples:</strong></p>
@@ -152,13 +153,16 @@ The user can also use the <code class="docutils literal notranslate"><span class
 <tr class="row-odd"><td><p>BR</p></td>
 <td><p>Branching ratios that lead to an isomeric state</p></td>
 </tr>
-<tr class="row-even"><td><p>fymtx</p></td>
+<tr class="row-even"><td><p>nu</p></td>
+<td><p>Number of neutrons emitted per fission</p></td>
+</tr>
+<tr class="row-odd"><td><p>fymtx</p></td>
 <td><p>fission yields matrix for all the fathers-daughters isotopes</p></td>
 </tr>
-<tr class="row-odd"><td><p>decaymtx</p></td>
+<tr class="row-even"><td><p>decaymtx</p></td>
 <td><p>decay matrix (1/sec)</p></td>
 </tr>
-<tr class="row-even"><td><p>flagBarns</p></td>
+<tr class="row-odd"><td><p>flagBarns</p></td>
 <td><p>if true cross sections are provided in barns otherwise in cm**2</p></td>
 </tr>
 </tbody>
