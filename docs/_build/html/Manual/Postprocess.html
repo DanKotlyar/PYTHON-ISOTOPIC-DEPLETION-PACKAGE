@@ -40,8 +40,8 @@
 Time-dependent data can be obtained for individual isotopes. Two methods are available:</p>
 <table class="docutils align-default">
 <colgroup>
-<col style="width: 29%" />
-<col style="width: 71%" />
+<col style="width: 28%" />
+<col style="width: 72%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Input</p></th>
@@ -51,6 +51,12 @@ Time-dependent data can be obtained for individual isotopes. Two methods are ava
 <tbody>
 <tr class="row-even"><td><p><a class="reference internal" href="#getvalues"><span class="std std-ref">getvalues</span></a></p></td>
 <td><p>Obtain the values of a specific property</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#export"><span class="std std-ref">Export</span></a></p></td>
+<td><p>Export results to hdf5 file</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#isotope-rank"><span class="std std-ref">IsotopicRank</span></a></p></td>
+<td><p>Rank isotopes according to their signficance</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#plot"><span class="std std-ref">plot</span></a></p></td>
 <td><p>Plot time-dependent results</p></td>
@@ -211,6 +217,63 @@ and generate a <a class="reference internal" href="postdepletion.html#postdep"><
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s2">&quot;flux&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Flux, n/cm2/s&quot;</span><span class="p">,</span> <span class="n">pltType</span><span class="o">=</span><span class="s2">&quot;semilogx&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+</div>
+<div class="section" id="isotopicrank">
+<span id="isotope-rank"></span><h2>IsotopicRank<a class="headerlink" href="#isotopicrank" title="Permalink to this headline">¶</a></h2>
+<p>Ranks attribute from most important to least important</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="o">.</span><span class="n">IsotopicRank</span><span class="p">(</span><span class="n">attribute</span><span class="p">,</span> <span class="n">timepoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeIdx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">absFlag</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where,</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Input</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>attribute</p></td>
+<td><p>The name of the property (provided as a string)</p></td>
+</tr>
+<tr class="row-odd"><td><p>timepoint</p></td>
+<td><p>Specific time point of interest.</p></td>
+</tr>
+<tr class="row-even"><td><p>timeIdx</p></td>
+<td><p>Specific time index of interest.</p></td>
+</tr>
+<tr class="row-odd"><td><p>absFlag</p></td>
+<td><p>Flag to indicate whether the ranking is according to absolute values or not. Default is True.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Either <code class="docutils literal notranslate"><span class="pre">timepoint</span></code> or <code class="docutils literal notranslate"><span class="pre">timeIdx</span></code> should be provided. If both are provided then the <code class="docutils literal notranslate"><span class="pre">timepoint</span></code> is search first. If none are provided then the last step is taken for ranking.</p></li>
+</ul>
+</div>
+<p><strong>Examples:</strong></p>
+<ul class="simple">
+<li><p>Rank the decay heat according to a specific time-point:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="n">Results</span><span class="p">(</span><span class="n">dep</span><span class="p">)</span>
+<span class="n">sortIds</span><span class="p">,</span> <span class="n">sortQts</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">IsotopicRank</span><span class="p">(</span><span class="s2">&quot;Qt&quot;</span><span class="p">,</span> <span class="n">timepoint</span><span class="o">=</span><span class="mf">30.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Rank according to BR:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sortIds</span><span class="p">,</span> <span class="n">sortQts</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">IsotopicRank</span><span class="p">(</span><span class="s2">&quot;BR&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="export">
+<span id="id3"></span><h2>Export<a class="headerlink" href="#export" title="Permalink to this headline">¶</a></h2>
+<p>To be completed. Spill all results to hhdf5 file.</p>
 </div>
 </div>
 

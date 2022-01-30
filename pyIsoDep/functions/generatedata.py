@@ -32,6 +32,9 @@ from pyIsoDep.functions.header import H5_PATH, BARN_2_CM2, JOULE_2MEV,\
     IDX_XS, DATA_ATTR
 
 
+NU_VAL = 2.5  # used for all isotopes (arbitrarily selected)
+
+
 class TransmutationData:
     """Container to store all the information required to perform depletion
 
@@ -66,6 +69,8 @@ class TransmutationData:
         branchin ratio that lead to a isomeric state
     lmbda : 1-dim array
         decay constants in 1/sec
+    nu : 1-dim array
+        number of neutrons emitted per fission
     decaymtx : 2-dim array
         Decay matrix
     ingestion : 1-dim array
@@ -110,6 +115,8 @@ class TransmutationData:
             self.inhalation = datalib.getvalues("inhalation")
             self.fymtx = wgtFY*datalib.getvalues("thermalFY") +\
                 (1-wgtFY)*datalib.getvalues("fastFY")
+            self.nu = wgtFY*datalib.getvalues("nu_thermal") +\
+                (1-wgtFY)*datalib.getvalues("nu_fast")
         else:
             self.fullId = None
             self.nIsotopes = None
@@ -121,10 +128,11 @@ class TransmutationData:
             self.ingestion = None
             self.inhalation = None
             self.fymtx = None
+            self.nu = None
 
     def ReadData(self, ID, sig_f, sig_c, sig_c2m=None, sig_n2n=None,
                  sig_n3n=None, sig_alpha=None, sig_p=None, sig_d=None,
-                 sig_t=None, fymtx=None, EfissMeV=None, BR=None,
+                 sig_t=None, fymtx=None, EfissMeV=None, BR=None, nu=None,
                  decaymtx=None, flagBarns=True):
         """Read data and build the transmutation matrix
 
@@ -154,6 +162,8 @@ class TransmutationData:
             fission energy in MeV for all the isotopes
         BR : 1-dim array
             Branching ratios that lead to an isomeric state
+        nu : 1-dim array
+            Number of neutrons emitted per fission
         fymtx : 2-dim array
             fission yields matrix for all the fathers-daughters isotopes
         decaymtx : 2-dim array
@@ -188,7 +198,7 @@ class TransmutationData:
         xsData =\
             self._storexs(ID, sig_f, sig_c, sig_c2m, sig_n2n, sig_n3n,
                           sig_alpha, sig_p, sig_d, sig_t, fymtx, EfissMeV, BR,
-                          decaymtx, flagBarns)
+                          nu, decaymtx, flagBarns)
 
         # For each parent define the products for all the possible reactions
         # e.g. 922350 absorbs a neutron and leads to 922360
@@ -282,15 +292,15 @@ class TransmutationData:
             raise ValueError("No attributes at all within the class")
 
     def _storexs(self, ID, sig_f, sig_c, sigc2m, sig_n2n, sig_n3n,
-                 sig_alpha, sig_p, sig_d, sig_t, fymtx, EfissMeV, BR,
+                 sig_alpha, sig_p, sig_d, sig_t, fymtx, EfissMeV, BR, nu,
                  decaymtx, flagBarns):
         """store all the cross section in a specific format"""
 
         # get all the cross sections in a single matrix (includes IDs)
         # get the fission energy, fission yields matrix, and decay matrix
-        xsDataPart, EfissMeVPart, fymtxPart, decaymtxPart = _checkxs(
+        xsDataPart, EfissMeVPart, fymtxPart, decaymtxPart, nuPart = _checkxs(
             ID, sig_f, sig_c, sigc2m, sig_n2n, sig_n3n, sig_alpha, sig_p,
-            sig_d, sig_t, fymtx, EfissMeV, BR, decaymtx, flagBarns)
+            sig_d, sig_t, fymtx, EfissMeV, BR, nu, decaymtx, flagBarns)
 
         # External data library is not provided
         if not self.libraryFlag:
@@ -302,6 +312,8 @@ class TransmutationData:
             self.EfissJoule = EfissMeVPart / JOULE_2MEV
             self.fymtx = fymtxPart
             self.decaymtx = decaymtxPart
+            if nu is not None:
+                self.nu = nuPart
             return xsDataPart
 
         # intersect between the full and partial list of nuclides
@@ -317,6 +329,12 @@ class TransmutationData:
         EfissMeV = np.zeros(self.nIsotopes)
         EfissMeV[idxFull] = EfissMeVPart[idxPart]
         EfissJoule = EfissMeV / JOULE_2MEV  # convert MeV to Joules
+
+        # Neutrons emitted per fission
+        if nu is not None:
+            nu = np.zeros(self.nIsotopes)
+            nu[idxFull] = nuPart[idxPart]
+            self.nu = nu
 
         # Multiply metastable capture cross section with the branching ratio
         if BR is None:
@@ -350,7 +368,7 @@ class TransmutationData:
 # Supplementary functions to check errors
 # -----------------------------------------------------------------------------
 def _checkxs(ID, sig_f, sig_c, sigc2m, sig_n2n, sig_n3n, sig_alpha, sig_p,
-             sig_d, sig_t, fymtx, EfissMeV, BR, decaymtx, flagBarns):
+             sig_d, sig_t, fymtx, EfissMeV, BR, nu, decaymtx, flagBarns):
     """check that all the cross sections are properly provided"""
 
     _is1darray(ID, "Nuclides Ids")
@@ -410,6 +428,9 @@ def _checkxs(ID, sig_f, sig_c, sigc2m, sig_n2n, sig_n3n, sig_alpha, sig_p,
     if BR is not None:
         BR = np.array(BR)
 
+    if nu is not None:
+        nu = np.array(nu)
+
     # check if all variables are 1-dim arrays
     _is1darray(sig_c, "Capture XS")
     _is1darray(sigc2m, "Capture to metastable XS")
@@ -421,6 +442,8 @@ def _checkxs(ID, sig_f, sig_c, sigc2m, sig_n2n, sig_n3n, sig_alpha, sig_p,
     _is1darray(sig_d, "(n, deutron) XS")
     _is1darray(sig_t, "(n, tritium) XS")
     _is1darray(EfissMeV, "Fission energy in MeV")
+    if nu is not None:
+        _is1darray(nu, "Number of neutrons emitted per fission")
     if BR is not None:
         _is1darray(BR, "Branching ratios")
     if fymtx is not None:
@@ -441,6 +464,8 @@ def _checkxs(ID, sig_f, sig_c, sigc2m, sig_n2n, sig_n3n, sig_alpha, sig_p,
     _isequallength(sig_d, numN, "(n, deutron) XS")
     _isequallength(sig_t, numN, "(n, tritium) XS")
     _isequallength(EfissMeV, numN, "Fission energy in MeV")
+    if nu is not None:
+        _isequallength(nu, numN, "Number of neutrons emitted per fission")
     if BR is not None:
         _isequallength(BR, numN, "Branching ratios")
     if fymtx is not None:
@@ -459,6 +484,8 @@ def _checkxs(ID, sig_f, sig_c, sigc2m, sig_n2n, sig_n3n, sig_alpha, sig_p,
     _isnonNegativeArray(sig_d, "(n, deutron) XS")
     _isnonNegativeArray(sig_t, "(n, tritium) XS")
     _isnonNegativeArray(EfissMeV, "Fission energy in MeV")
+    if nu is not None:
+        _isnonNegativeArray(nu, "Number of neutrons emitted per fission")
     if BR is not None:
         _isnonNegativeArray(BR, "Branching ratios")
     if fymtx is not None:
@@ -491,7 +518,7 @@ def _checkxs(ID, sig_f, sig_c, sigc2m, sig_n2n, sig_n3n, sig_alpha, sig_p,
         xsData[:, IDX_XS["c2m"]] = sig_c * BR
         xsData[:, IDX_XS["c"]] = sig_c * (1 - BR)
 
-    return xsData, EfissMeV, fymtx, decaymtx
+    return xsData, EfissMeV, fymtx, decaymtx, nu
 
 
 # Obtain the energy per fission for the defined isotopes

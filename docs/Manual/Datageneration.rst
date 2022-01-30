@@ -50,6 +50,8 @@ wgtFY				  Fission yield weighting factor
 		.. math::
 		
 		   \bar{fy} = w_{fy}fy_{thermal} + (1-w_{fy})fy_{fast}  
+		   
+	* The same weighting procedure is applied for the fast and thermal neutrons emitted per fission (part of the data library).
   
 **Examples:**
 
@@ -100,6 +102,8 @@ sig_t				  (n, tritium) in barns
 EfissMeV			fission energy in MeV for all the isotopes
 ------------- ------------------------------------------
 BR				  	Branching ratios that lead to an isomeric state
+------------- ------------------------------------------
+nu				  	Number of neutrons emitted per fission
 ------------- ------------------------------------------
 fymtx				  fission yields matrix for all the fathers-daughters isotopes
 ------------- ------------------------------------------
