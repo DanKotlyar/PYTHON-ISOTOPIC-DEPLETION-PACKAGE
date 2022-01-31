@@ -380,7 +380,11 @@ Reactivity		Calculate isotopic and total reactivity worth in pcm
   * Isotopic reactivity worth 
 		.. math::
 		
-		   k_{eff,no-j}(t) = P_{NL}\frac{\sum_{k \ne j}{\nu_k \sigma_{f,k} N_k(t)}}{\sum_{k \ne j}{\sigma_{a,k}N_k(t)}}
 		   
-		   \Delta \rho_j = \frac{1}{k_{eff,no-j}(t)} - \frac{1}{k_{eff}(t)}
+		   \frac{\partial keff}{\partial N_j} = \frac{\nu_j \sigma_{f,j} \sum_{k}{\sigma_{a,k}N_k(t)} - \sigma_{a,j}\sum_{j}{\nu_j \sigma_{f,j} N_j(t)} }{\left(\sum_{k}{\sigma_{a,k}N_k(t)}\right)^2}
+		   
+		   
+		   \Delta k_{j} = \frac{\partial k_{eff}}{\partial N_j}\Delta N_j
+		   
+		   \Delta \rho_j = \frac{1}{k_{eff}+\Delta k_{j}} - \frac{1}{k_{eff}}
 		   

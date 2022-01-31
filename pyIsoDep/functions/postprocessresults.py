@@ -153,10 +153,12 @@ class Results:
             _isarray(isotopes, "Isotopes Id")
         values = getattr(self, attribute)
         if values.ndim == 2:
+            valuesOut = np.zeros((len(isotopes), values.shape[1]))
             vals, idxFull, idxPart =\
                 np.intersect1d(self.fullId, isotopes, assume_unique=True,
                                return_indices=True)
-            return values[idxFull, :]
+            valuesOut[idxPart, :] = values[idxFull, :]
+            return valuesOut
         else:
             return values
 
@@ -164,7 +166,7 @@ class Results:
         """function exports results to hdf5 file
 
         The method allows the entire simulation results, cross section
-        libaries, and meta-data to be written to an hdf5 file. 
+        libaries, and meta-data to be written to an hdf5 file.
 
         Parameters
         ----------
@@ -274,7 +276,10 @@ class Results:
 
         # plot the results for multiple isotopes
         if values.ndim == 2:
-            if values.shape[1] != self.nsteps+1:
+            if attribute in INTERVAL_ATTRIBUTES and\
+                    values.shape[1] == self.nsteps:
+                timepoints = 0.5*(timepoints[1::] + timepoints[:-1:])
+            elif values.shape[1] != self.nsteps+1:
                 raise ValueError("The attribute {} has no time-dependency".
                                  format(attribute))
             values = values / norm
