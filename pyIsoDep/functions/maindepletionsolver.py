@@ -612,25 +612,33 @@ class MainDepletion:
             fiss_xs[:, i] = self.XS[:, IDX_XS['f'], i]
 
             # Multiplication factor at the specific time point
-            self.keff[i] = nonLeakageP *\
+            self.keff[i] = \
                 (self.Nt[:, i] * self.nu * fiss_xs[:, i]).sum() /\
                 (self.Nt[:, i] * abs_xs[:, i]).sum()
 
             # Total reactivity at the specific time point
             self.Rho[i] = TO_PCM * (1 - 1/self.keff[i])
 
-            # Multiplication factor without the isotope j
-            keff_wIsot = np.zeros(self.nIsotopes)
+            # Calculate the sensitivity of Nj to keff -> dkeff/dNj
+            dkeff2dN = np.zeros(self.nIsotopes)
             for j in range(self.nIsotopes):
-                keff_wIsot[j] =\
-                    nonLeakageP *\
-                    ((self.Nt[:, i] * self.nu * fiss_xs[:, i]).sum() -
-                     self.Nt[j, i] * self.nu[j] * fiss_xs[j, i]) /\
-                    ((self.Nt[:, i] * abs_xs[:, i]).sum() -
-                     self.Nt[j, i] * abs_xs[j, i])
+                dkeff2dN[j] =\
+                    (self.nu[j]*fiss_xs[j, i]*(
+                        self.Nt[:, i]*abs_xs[:, i]).sum()-abs_xs[j, i]*(
+                            self.Nt[:, i]*self.nu*fiss_xs[:, i]).sum())/(
+                                self.Nt[:, i]*abs_xs[:, i]).sum()**2
+
+            # Perturbed multiplication factor without the isotope j
+            # dkeff/dNj*DeltaNj = DeltaKeff
+            keff_wIsot = self.keff[i] + dkeff2dN*self.Nt[:, i]
+
             # reactivity without the isotope j
             rho_wIsot = TO_PCM * (1 - 1/keff_wIsot)
 
             # reactivity worth
-            self.dRho[:, i] = self.Rho[i] - rho_wIsot
+            self.dRho[:, i] = rho_wIsot - self.Rho[i]
             self.dRhoToRho[:, i] = self.dRho[:, i] / self.Rho[i]
+
+        # Include the leakage probability
+        self.keff = self.keff * nonLeakageP
+        self.Rho = TO_PCM * (1 - 1/self.keff)
