@@ -280,14 +280,13 @@ class XsInterface:
                     condY1 = np.where(y == min(y[y != min(y)]))  # 2nd-smallest
 
                 idx00 = np.intersect1d(condX0, condY0)
-                idx10 = np.intersect1d(condX1, condY0)
-                idx01 = np.intersect1d(condX0, condY1)
                 idx11 = np.intersect1d(condX1, condY1)
 
                 idx00 = idx00[-1]
-                idx10 = idx10[0]
-                idx01 = idx01[0]
                 idx11 = idx11[0]
+                idx01 = idx00 + 1
+                idx10 = idx11 - 1
+
                 # Obtain the corresponding xs sets
                 xs00 = self.xssets[idx00]
                 xs10 = self.xssets[idx10]
