@@ -364,6 +364,45 @@ class MainDepletion:
         self._solveTime = toc - tic
         self._xsintrp = xsinterp
 
+    def NoDepletion(self, xsinterp=False):
+        """No depletion solution at all"""
+
+        # All data sets must contain the required attributes
+        for key, data in self._xsDataSets.items():
+            for attr in TRANSMUATION_ATTR:
+                if not hasattr(data, attr):
+                    raise ValueError("No attribute <{}> in data for time={}"
+                                     .format(attr, key))
+
+        # Nt will store the concentrations as a function of time
+        self.Nt = np.zeros((self.nIsotopes, self.nsteps + 1))
+        self.Nt[:, 0] = self.N0  # initial concentrations
+        # Nt will store all the weighted cross sections as a function of time
+        self.XS = np.zeros((self.nIsotopes, len(IDX_XS), self.nsteps + 1))
+
+        tic = time.perf_counter()  # start timer
+        for idx, dt in enumerate(self.timesteps):
+
+            # Obtain the interpolated fission energy, xs, and transmutation mtx
+            # -----------------------------------------------------------------
+            fissE, sigf, transmutationmtx, xsTable =\
+                self._getInterpXS(self.timepoints[idx], xsinterp)
+
+            # Store the weighted cross sections:
+            # -----------------------------------------------------------------
+            self.XS[:, :, idx] = xsTable
+
+            # No depletion - power/flux do not exist
+            # -----------------------------------------------------------------
+            self.power[idx] = 0
+            self.flux[idx] = 0
+
+            self.Nt[:, idx+1] = self.Nt[:, 0]
+
+        toc = time.perf_counter()
+        self._solveTime = toc - tic
+        self._xsintrp = xsinterp
+
     def SolveDecay(self, method="cram", rtol=1E-10):
         """Solve the Bateman equations with only the decay chains
 
@@ -602,6 +641,10 @@ class MainDepletion:
         self.dRhoToRho = np.zeros((self.nIsotopes, self.nsteps))
         self.Rho = np.zeros(self.nsteps)
         self.keff = np.zeros(self.nsteps)
+        # macroscopic cross sections
+        self.SIG_ABS = np.zeros(self.nsteps)
+        self.SIG_NSF = np.zeros(self.nsteps)
+        self.SIG_FISS = np.zeros(self.nsteps)
 
         if self.nu is None:
             raise ValueError("Attribute nu does not exist. Please define in "
@@ -612,9 +655,11 @@ class MainDepletion:
             fiss_xs[:, i] = self.XS[:, IDX_XS['f'], i]
 
             # Multiplication factor at the specific time point
-            self.keff[i] = \
-                (self.Nt[:, i] * self.nu * fiss_xs[:, i]).sum() /\
-                (self.Nt[:, i] * abs_xs[:, i]).sum()
+            self.SIG_FISS[i] = (self.Nt[:, i] * fiss_xs[:, i]).sum()
+            self.SIG_NSF[i] = (self.Nt[:, i] * self.nu * fiss_xs[:, i]).sum()
+            self.SIG_ABS[i] = (self.Nt[:, i] * abs_xs[:, i]).sum()
+
+            self.keff[i] = self.SIG_NSF[i] / self.SIG_ABS[i]
 
             # Total reactivity at the specific time point
             self.Rho[i] = TO_PCM * (1 - 1/self.keff[i])

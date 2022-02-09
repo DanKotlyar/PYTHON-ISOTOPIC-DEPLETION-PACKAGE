@@ -375,6 +375,16 @@ If the latter is provided then the program calculates the flux on-the-fly from k
 </pre></div>
 </div>
 </div>
+<div class="section" id="nodepletion">
+<h2>NoDepletion<a class="headerlink" href="#nodepletion" title="Permalink to this headline">¶</a></h2>
+<p>This function does nothing but obtaining the right cross sections
+Also, the function fixes the nuclide densities for all the time points.</p>
+<p><strong>Execution</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dep</span><span class="o">.</span><span class="n">NoDepletion</span><span class="p">(</span><span class="n">xsinterp</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where, <code class="docutils literal notranslate"><span class="pre">xsinterp</span></code> is a flag to indicate whether interpolation in between timesteps is allowed to be performed for the transmutation data.</p>
+</div>
 <div class="section" id="supplementary-functions">
 <span id="step5sup"></span><h2>Supplementary Functions<a class="headerlink" href="#supplementary-functions" title="Permalink to this headline">¶</a></h2>
 <p>There are a number of <strong>post-irradiation supplementary methods</strong> embedded here and listed in the table below:</p>

@@ -50,7 +50,7 @@ def test_2d_interpolation():
     # -------------------------------------------------------------------------
 
     xs0 = XsInterface(numdepn=2, numpert=len(xssets), states=states,
-                      xssets=xssets, extrpFlag=True)
+                      xssets=xssets)
 
     xTrace = [3.25, 3.75, 4.0, 4.25, 4.75]
     yTrace = [925, 1230, 1625, 2210, 2395]
@@ -97,7 +97,7 @@ def test_1d_interpolation():
     # -------------------------------------------------------------------------
 
     xs0 = XsInterface(numdepn=1, numpert=len(xssets), states=states,
-                      xssets=xssets, extrpFlag=True)
+                      xssets=xssets)
     xTrace = [750]
 
     timepoints, intrXs = xs0.setTimeTrace([0], xTrace)

@@ -14,10 +14,9 @@ Last updated on Sat Jan 15 12:00:00 2021 @author: Dan Kotlyar
 import copy
 
 import numpy as np
-from functools import reduce
 
 from pyIsoDep.functions.checkerrors import _isint, _exp2dshape,\
-    _isequallength, _anynegative, _inrange, _isbool, _islist
+    _isequallength, _anynegative, _inrange, _islist
 
 from pyIsoDep.functions.header import DATA_ATTR, INTRP_ATTR
 
@@ -71,7 +70,7 @@ class XsInterface:
 
     """
 
-    def __init__(self, numdepn, numpert, states, xssets, extrpFlag=False):
+    def __init__(self, numdepn, numpert, states, xssets):
         """reset values with a complete list of all the nuclides"""
 
         # Check for potential errors
@@ -82,10 +81,9 @@ class XsInterface:
         _exp2dshape(states, (numpert, numdepn), "States")
         _islist(xssets, "XS Sets")
         _isequallength(xssets, numpert, "XS Sets List")
-        _isbool(extrpFlag, "XS extrapolation flag")
         # Check values
-        if numdepn > 3:
-            raise ValueError("Current version supports up to 3 dependencies "
+        if numdepn > 2:
+            raise ValueError("Current version supports up to 2 dependencies "
                              "and not {}".format(numdepn))
         # Check that each data set contains the required attributes
         # ---------------------------------------------------------------------
@@ -112,13 +110,23 @@ class XsInterface:
                              "perturbations were provided".format(uniqStates,
                                                                   numpert))
 
+        # Store the user-provided data unsorted data
+        # ---------------------------------------------------------------------
+        self._states = states
+        self._xssets = xssets
+
+        # Sort data
+        # ---------------------------------------------------------------------
+        uniqStates, lenStates, xssetsMtx =\
+            self._sortsets(numdepn, numpert, states, xssets)
+
         # Store the data
         # ---------------------------------------------------------------------
         self.numdepn = numdepn
         self.numpert = numpert
-        self.states = states
-        self.xssets = xssets
-        self.extrpFlag = extrpFlag
+        self.states = uniqStates
+        self.xssets = xssetsMtx
+        self._lenStates = lenStates
 
     def setTimeTrace(self, timepoints, *argv):
         """Feed in operational trace.
@@ -196,41 +204,34 @@ class XsInterface:
     def _LinearSplineInterp(self, traces, timepts):
         """Interpolate the data for a single dependency"""
 
+        if (traces[0] > max(self.states[0])).any() or (
+                traces[0] < min(self.states[0])).any():
+            raise ValueError("Traces must be within defined range of data "
+                             "[{},{}]".format(max(self.states[0]),
+                                              min(self.states[0])))
         xsTimeSets = {}
-        x = self.states.flatten()  # create a 1-dim array
+        x = self.states[0]  # create a 1-dim array
         # loop over all the values within the trace and interpolate
         for it, tval in enumerate(timepts):
             xval = traces[0][it]  # time-dependent value of the trace
-            cond = np.where(x == xval)
-            if np.size(cond):  # if the dep. exists in states
+            idx, = np.where(x == xval)
+            if idx.size:  # if the dep. exists in states
                 # No need to change the xs-set
-                xsTimeSets[it] = self.xssets[cond[0][0]]
+                xsTimeSets[it] = self.xssets[idx[0]]
                 continue
             else:
-                # Find the right and left bounds
-                condR = np.where(x > xval)
-                condL = np.where(x < xval)
-                if not np.size(condR):
-                    # Outermost right points are used for extrapolation
-                    idxR = len(x) - 1
-                    idxL = len(x) - 2
-                elif not np.size(condL):
-                    # Outermost left points are used for extrapolation
-                    idxL = 0
-                    idxR = 1
-                else:
-                    idxR = condR[0][0]
-                    idxL = condL[0][-1]
+                idx = np.where(x > xval)[0][0]
+
                 # Obtain the corresponding xs sets
-                xsL = self.xssets[idxL]
-                xsR = self.xssets[idxR]
+                xsR = self.xssets[idx]
+                xsL = self.xssets[idx-1]
                 xsIntp = copy.copy(xsL)  # create a new interp. xs set
+
             # loop over all the required interpolated attributes
             for attr in INTRP_ATTR:
                 vals0 = getattr(xsL, attr)
                 vals1 = getattr(xsR, attr)
-                vals = LinearInterp(x[idxL], x[idxR], vals0, vals1, xval,
-                                    self.extrpFlag)
+                vals = LinearInterp(x[idx-1], x[idx], vals0, vals1, xval)
                 setattr(xsIntp, attr, vals)  # assign interpolated attribute
             xsTimeSets[it] = xsIntp
         # store all the interpolated xs sets on the object
@@ -239,59 +240,40 @@ class XsInterface:
     def _BiLinearSplineInterp(self, traces, timepts):
         """Interpolate the data for two dependencies"""
 
+        if (traces[0] > max(self.states[0])).any() or (
+                traces[0] < min(self.states[0])).any():
+            raise ValueError("Traces must be within defined range of data "
+                             "[{},{}]".format(max(self.states[0]),
+                                              min(self.states[0])))
+        if (traces[1] > max(self.states[1])).any() or (
+                traces[1] < min(self.states[1])).any():
+            raise ValueError("Traces must be within defined range of data "
+                             "[{},{}]".format(max(self.states[1]),
+                                              min(self.states[1])))
         xsTimeSets = {}
-        x = self.states[:, 0]  # dep. 1
-        y = self.states[:, 1]  # dep. 2
+        x = self.states[0]  # dep. 1
+        y = self.states[1]  # dep. 2
         # loop over all the values within the trace and interpolate
         for it, tval in enumerate(timepts):
             # specific time-dependent (xval, yval) for interpolation
             xval = traces[0][it]
             yval = traces[1][it]
-            condX, = np.where(x == xval)
-            condY, = np.where(y == yval)
-            idx = np.intersect1d(condX, condY)  # index of the (x,y) pair
-            if np.size(idx):  # if the dep. pair exists
+            idx, = np.where(x == xval)
+            idy, = np.where(y == yval)
+            if idx.size and idy.size:  # if the dep. pair exists
                 # No need to change the xs-set
-                xsTimeSets[it] = self.xssets[idx[0]]
+                xsTimeSets[it] = self.xssets[idx, idy]
                 continue
             else:
                 # Find the right and left bounds for x and y dep.
-                condX1 = np.where(x > xval)
-                condX0 = np.where(x < xval)
-                condY1 = np.where(y > yval)
-                condY0 = np.where(y < yval)
-
-                if not np.size(condX1):
-                    # Outermost right points are used for x-extrapolation
-                    condX1 = np.where(x == max(x))  # largest number
-                    condX0 = np.where(x == max(x[x != max(x)]))  # 2nd-largest
-                elif not np.size(condX0):
-                    # Outermost left points are used for x-extrapolation
-                    condX0 = np.where(x == min(x))  # smallest number
-                    condX1 = np.where(x == min(x[x != min(x)]))  # 2nd-smallest
-
-                if not np.size(condY1):
-                    # Outermost right points are used for y-extrapolation
-                    condY1 = np.where(y == max(y))  # largest number
-                    condY0 = np.where(y == max(y[y != max(y)]))  # 2nd-largest
-                elif not np.size(condY0):
-                    # Outermost left points are used for y-extrapolation
-                    condY0 = np.where(y == min(y))  # smallest number
-                    condY1 = np.where(y == min(y[y != min(y)]))  # 2nd-smallest
-
-                idx00 = np.intersect1d(condX0, condY0)
-                idx11 = np.intersect1d(condX1, condY1)
-
-                idx00 = idx00[-1]
-                idx11 = idx11[0]
-                idx01 = idx00 + 1
-                idx10 = idx11 - 1
+                idx = np.where(x > xval)[0][0]
+                idy = np.where(y > yval)[0][0]
 
                 # Obtain the corresponding xs sets
-                xs00 = self.xssets[idx00]
-                xs10 = self.xssets[idx10]
-                xs01 = self.xssets[idx01]
-                xs11 = self.xssets[idx11]
+                xs00 = self.xssets[idx-1, idy-1]
+                xs10 = self.xssets[idx, idy-1]
+                xs01 = self.xssets[idx-1, idy]
+                xs11 = self.xssets[idx, idy]
                 xsIntp = copy.copy(xs00)  # create a new interp. xs set
             # loop over all the required interpolated attributes
             for attr in INTRP_ATTR:
@@ -300,9 +282,9 @@ class XsInterface:
                 vals01 = getattr(xs01, attr)
                 vals11 = getattr(xs11, attr)
                 # Get and assign interpolated values
-                vals = BiLinearInterp(x[idx00], x[idx11], y[idx00], y[idx11],
+                vals = BiLinearInterp(x[idx-1], x[idx], y[idy-1], y[idy],
                                       vals00, vals10, vals01, vals11,
-                                      xval, yval, self.extrpFlag)
+                                      xval, yval)
                 setattr(xsIntp, attr, vals)  # assign
             xsTimeSets[it] = xsIntp
         # store all the interpolated xs sets on the object
@@ -310,100 +292,59 @@ class XsInterface:
 
     def _TriLinearSplineInterp(self, traces, timepts):
         """Interpolate the data for two dependencies"""
+        # function will be completed in the future
+        pass
 
-        xsTimeSets = {}
-        x = self.states[:, 0]  # dep. 1
-        y = self.states[:, 1]  # dep. 2
-        z = self.states[:, 2]  # dep. 3
-        # loop over all the values within the trace and interpolate
-        for it, tval in enumerate(timepts):
-            # specific time-dependent (xval, yval, zval) for interpolation
-            xval = traces[0][it]
-            yval = traces[1][it]
-            zval = traces[2][it]
-            condX, = np.where(x == xval)
-            condY, = np.where(y == yval)
-            condZ, = np.where(z == zval)
-            # Find the (x,y,z) triplet
-            idx = reduce(np.intersect1d, (condX, condY, condZ))
-            if np.size(idx):  # if the dep. pair exists
-                # No need to change the xs-set
-                xsTimeSets[it] = self.xssets[idx[0]]
-                continue
-            else:
-                # Find the right and left bounds for x and y dep.
-                condX1 = np.where(x > xval)
-                condX0 = np.where(x < xval)
-                condY1 = np.where(y > yval)
-                condY0 = np.where(y < yval)
-                condZ1 = np.where(z > zval)
-                condZ0 = np.where(z < zval)
+    @staticmethod
+    def _sortsets(numdepn, numpert, states, xssets):
+        """sorts the data into multidimensional arrays"""
+        # store the unique values foe each dependency
+        uniqDep = np.empty(numdepn, dtype=np.object)
+        lenDep = np.empty(numdepn, dtype=int)
 
-                if not np.size(condX1):
-                    # Outermost right points are used for x-extrapolation
-                    condX1 = np.where(x == max(x))  # largest number
-                    condX0 = np.where(x == max(x[x != max(x)]))  # 2nd-largest
-                elif not np.size(condX0):
-                    # Outermost left points are used for x-extrapolation
-                    condX0 = np.where(x == min(x))  # smallest number
-                    condX1 = np.where(x == min(x[x != min(x)]))  # 2nd-smallest
-                if not np.size(condY1):
-                    condY1 = np.where(y == max(y))
-                    condY0 = np.where(y == max(y[y != max(y)]))
-                elif not np.size(condY0):
-                    condY0 = np.where(y == min(y))
-                    condY1 = np.where(y == min(y[y != min(y)]))
-                if not np.size(condZ1):
-                    condZ1 = np.where(z == max(z))
-                    condZ0 = np.where(z == max(z[z != max(z)]))
-                elif not np.size(condZ0):
-                    condZ0 = np.where(z == min(z))
-                    condZ1 = np.where(z == min(z[z != min(z)]))
+        for idx in range(numdepn):
+            uniqDep[idx] = np.unique(states[:, idx])
+            lenDep[idx] = len(uniqDep[idx])
 
-                idx000 = reduce(np.intersect1d, (condX0, condY0, condZ0))[0]
-                idx100 = reduce(np.intersect1d, (condX1, condY0, condZ0))[0]
-                idx010 = reduce(np.intersect1d, (condX0, condY1, condZ0))[0]
-                idx110 = reduce(np.intersect1d, (condX1, condY1, condZ0))[0]
-                idx001 = reduce(np.intersect1d, (condX0, condY0, condZ1))[0]
-                idx101 = reduce(np.intersect1d, (condX1, condY0, condZ1))[0]
-                idx011 = reduce(np.intersect1d, (condX0, condY1, condZ1))[0]
-                idx111 = reduce(np.intersect1d, (condX1, condY1, condZ1))[-1]
+        # A matrix to store all the objects/xs sets for all dependencies
+        xssetsMtx = np.empty(lenDep, dtype=np.object)
 
-                # Obtain the corresponding xs sets
-                xs000 = self.xssets[idx000]
-                xs100 = self.xssets[idx100]
-                xs010 = self.xssets[idx010]
-                xs110 = self.xssets[idx110]
-                xs001 = self.xssets[idx001]
-                xs101 = self.xssets[idx101]
-                xs011 = self.xssets[idx011]
-                xs111 = self.xssets[idx111]
+        if numdepn == 1:
+            for ix, xval in enumerate(uniqDep[0]):
+                cond, = np.where(states[:, 0] == xval)
+                if cond.size:
+                    xssetsMtx[ix] = xssets[cond[0]]
+                else:
+                    raise ValueError("Value {} for dep.1 does not exist"
+                                     .format(xval))
+        if numdepn == 2:
+            for ix, xval in enumerate(uniqDep[0]):
+                for iy, yval in enumerate(uniqDep[1]):
+                    cond, = np.where((states[:, 0] == xval) & (
+                        states[:, 1] == yval))
+                    if cond.size:
+                        xssetsMtx[ix, iy] = xssets[cond[0]]
+                    else:
+                        raise ValueError("Value {},{} for dep.1-2 do not "
+                                         "exist".format(xval, yval))
 
-                xsIntp = copy.copy(xs000)  # create a new interp. xs set
-            # loop over all the required interpolated attributes
-            for attr in INTRP_ATTR:
-                vals000 = getattr(xs000, attr)
-                vals100 = getattr(xs100, attr)
-                vals010 = getattr(xs010, attr)
-                vals110 = getattr(xs110, attr)
-                vals001 = getattr(xs001, attr)
-                vals101 = getattr(xs101, attr)
-                vals011 = getattr(xs011, attr)
-                vals111 = getattr(xs111, attr)
+        if numdepn == 3:
+            for ix, xval in enumerate(uniqDep[0]):
+                for iy, yval in enumerate(uniqDep[1]):
+                    for iz, zval in enumerate(uniqDep[2]):
+                        cond, = np.where((states[:, 0] == xval) & (
+                            states[:, 1] == yval) & (states[:, 2] == zval))
+                        if cond.size:
+                            xssetsMtx[ix, iy, iz] = xssets[cond[0]]
+                        else:
+                            raise ValueError("Value {},{},{} for dep.1-3 do "
+                                             "not exist"
+                                             .format(xval, yval, zval))
 
-                # Get and assign interpolated values
-                vals = TriLinearInterp(
-                    x[idx000], x[idx110], y[idx000], y[idx110], z[idx000],
-                    z[idx111], vals000, vals100, vals010, vals110, vals001,
-                    vals101, vals011, vals111, xval, yval, zval,
-                    self.extrpFlag)
-                setattr(xsIntp, attr, vals)  # assign
-            xsTimeSets[it] = xsIntp
-        # store all the interpolated xs sets on the object
-        self.xsTimeSets = xsTimeSets
+        return uniqDep, lenDep, xssetsMtx
 
 
-def LinearInterp(x0, x1, vals0, vals1, x, extrpFlag=True):
+def LinearInterp(x0, x1, vals0, vals1, x):
     """Linear interpolation
 
     Given the dependnecies x0 (left) and x1 (right) a linear interpolation is
@@ -438,17 +379,14 @@ def LinearInterp(x0, x1, vals0, vals1, x, extrpFlag=True):
 
     """
 
-    if not extrpFlag:
-        _inrange(x, "value of x", [x0, x1])
-
+    _inrange(x, "value of x", [x0, x1])
     xd = (x - x0) / (x1 - x0)
     vals = (1 - xd)*vals0 + xd*vals1
 
     return vals
 
 
-def BiLinearInterp(x0, x1, y0, y1, vals00, vals10, vals01, vals11, x, y,
-                   extrpFlag=True):
+def BiLinearInterp(x0, x1, y0, y1, vals00, vals10, vals01, vals11, x, y):
     """Bi-Linear interpolation on a x and y grid
 
     The grid and values are provided in the schematics below:
@@ -506,9 +444,8 @@ def BiLinearInterp(x0, x1, y0, y1, vals00, vals10, vals01, vals11, x, y,
 
     """
 
-    if not extrpFlag:
-        _inrange(x, "value of x", [x0, x1])
-        _inrange(y, "value of y", [y0, y1])
+    _inrange(x, "value of x", [x0, x1])
+    _inrange(y, "value of y", [y0, y1])
 
     xd = (x - x0) / (x1 - x0)
     yd = (y - y0) / (y1 - y0)
@@ -524,8 +461,7 @@ def BiLinearInterp(x0, x1, y0, y1, vals00, vals10, vals01, vals11, x, y,
 
 
 def TriLinearInterp(x0, x1, y0, y1, z0, z1, vals000, vals100, vals010, vals110,
-                    vals001, vals101, vals011, vals111, x, y, z,
-                    extrpFlag=True):
+                    vals001, vals101, vals011, vals111, x, y, z):
     """Tri-Linear interpolation on (x, y, z) grid
 
     The grid and values are provided in the schematics below:
@@ -604,10 +540,9 @@ vals001* -----------*  |vals101
 
     """
 
-    if not extrpFlag:
-        _inrange(x, "value of x", [x0, x1])
-        _inrange(y, "value of y", [y0, y1])
-        _inrange(z, "value of z", [z0, z1])
+    _inrange(x, "value of x", [x0, x1])
+    _inrange(y, "value of y", [y0, y1])
+    _inrange(z, "value of z", [z0, z1])
 
     xd = (x - x0) / (x1 - x0)
     yd = (y - y0) / (y1 - y0)
