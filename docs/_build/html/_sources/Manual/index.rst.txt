@@ -22,7 +22,28 @@ perform a transmutation and/or decay simulation.
 	2. :ref:`Execute depletion <deplete>`: set depletion or decay history, and solve the Bateman equations.
 	3. :ref:`Post-process results <postprocess>`: a dedicated container to store only result attributes, and methods to obtain specific values and plot results.
 
-		
+
+Weighting Different Solutions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The user may want to solve multiple problems.
+Each problem can be set separately. However, all these individual problems are related as they could be part of a complete problem.
+For example, different components in the reactor-core.
+The user can combine this by applying the weighting method.
+The weighting method corrects according to volume.
+
+**Example**
+
+.. code::
+	
+	from pyIsoDep.functions.weightdepletionobjects import WeightDepObjects
+	weightedDep = WeightDepObjects(dep1, dep2, dep3, ...)
+
+where, ``dep1``, ... are the depletion objects.
+Then, the  ``weightedDep`` can be post-processed.
+
+
+	
 Description of Stored Data 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 Following a successive execution of each of the above stages, the containers will be populated with data unique to each container.

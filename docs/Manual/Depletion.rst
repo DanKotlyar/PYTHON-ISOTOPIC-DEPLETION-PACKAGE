@@ -302,6 +302,21 @@ method				Method {"cram", "expm", "odeint"} used to solve the Bateman equations
 	dep.SolveDepletion("expm")
 	
 	
+NoDepletion
+^^^^^^^^^^^
+
+This function does nothing but obtaining the right cross sections
+Also, the function fixes the nuclide densities for all the time points.
+
+**Execution**:
+  
+.. code::
+
+	dep.NoDepletion(xsinterp)
+
+where, ``xsinterp`` is a flag to indicate whether interpolation in between timesteps is allowed to be performed for the transmutation data.
+
+	
 .. _step5sup:
 
 Supplementary Functions

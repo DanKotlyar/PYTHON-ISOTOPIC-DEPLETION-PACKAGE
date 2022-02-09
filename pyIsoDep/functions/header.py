@@ -103,6 +103,12 @@ MASS_ATTR = ["Nt", "AW", "volume"]
 # Data required for interpolation
 INTRP_ATTR = ["fymtx", "EfissJoule", "xsData", "transmutationmtx"]
 
+# Attributes that should not be weighted
+NOT_WEIGHT_ATTR = ['_xsintrp', 'fullId', 'nIsotopes', 'AW', 'Q', 'BR', 'lmbda',
+                   'decaymtx', 'nu', '_xsDataSets',
+                   '_timeframes', '_solveTime', 'flagPower', 'usertimesteps',
+                   'timesteps', 'timepoints', 'timeunits', 'nsteps', 'volume']
+
 # hdf5 output file atrributes list
 HDF5_GROUPS = {"metaData": ["nIsotopes", "AW", "fullId", "timepoints",
                             "timesteps", "timeunits", "usertimesteps",
@@ -146,9 +152,8 @@ ZAI_DICT = {1: "H", 2: "He", 3: "Li", 4: "Be", 5: "B", 6: "C", 7: "N", 8: "O",
             59: "Pr", 60: "Nd", 61: "Pm", 62: "Sm", 63: "Eu", 64: "Gd",
             65: "Tb", 66: "Dy", 67: "Ho", 68: "Er", 69: "Tm", 70: "Yb",
             71: "Lu", 72: "Hf", 73: "Ta", 74: "W", 75: "Re", 76: "Os",
-            77: "Ir", 78: "Pt", 79: "Au", 80: "Hg",81: "Tl", 82: "Pb",
+            77: "Ir", 78: "Pt", 79: "Au", 80: "Hg", 81: "Tl", 82: "Pb",
             83: "Bi", 84: "Po", 85: "At", 86: "Rn", 87: "Fr", 88: "Ra",
             89: "Ac", 90: "Th", 91: "Pa", 92: "U", 93: "Np", 94: "Pu",
             95: "Am", 96: "Cm", 97: "Bk", 98: "Cf", 99: "Es", 100: "Fm",
             101: "Md"}
-
