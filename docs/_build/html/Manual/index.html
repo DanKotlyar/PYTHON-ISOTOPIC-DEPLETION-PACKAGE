@@ -52,22 +52,26 @@ perform a transmutation and/or decay simulation.</p>
 </li>
 <li><p><a class="reference internal" href="Depletion.html#deplete"><span class="std std-ref">Execute depletion</span></a>: set depletion or decay history, and solve the Bateman equations.</p></li>
 <li><p><a class="reference internal" href="Postprocess.html#postprocess"><span class="std std-ref">Post-process results</span></a>: a dedicated container to store only result attributes, and methods to obtain specific values and plot results.</p></li>
+<li><p><a class="reference internal" href="WeightDepletions.html#weightdep"><span class="std std-ref">Weight multiple depletion objects</span></a>: Volume weighted method to obtain a single depletion object with volume weighted fields.</p></li>
 </ol>
 </div></blockquote>
-<div class="section" id="weighting-different-solutions">
-<h3>Weighting Different Solutions<a class="headerlink" href="#weighting-different-solutions" title="Permalink to this headline">¶</a></h3>
-<p>The user may want to solve multiple problems.
-Each problem can be set separately. However, all these individual problems are related as they could be part of a complete problem.
-For example, different components in the reactor-core.
-The user can combine this by applying the weighting method.
-The weighting method corrects according to volume.</p>
-<p><strong>Example</strong></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyIsoDep.functions.weightdepletionobjects</span> <span class="kn">import</span> <span class="n">WeightDepObjects</span>
-<span class="n">weightedDep</span> <span class="o">=</span> <span class="n">WeightDepObjects</span><span class="p">(</span><span class="n">dep1</span><span class="p">,</span> <span class="n">dep2</span><span class="p">,</span> <span class="n">dep3</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
-</pre></div>
+<div class="section" id="execution-flow-scenarios">
+<h3>Execution Flow Scenarios<a class="headerlink" href="#execution-flow-scenarios" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="scenario-1">
+<h4>Scenario 1:<a class="headerlink" href="#scenario-1" title="Permalink to this headline">¶</a></h4>
+<p>Multiple/Single time-dependent data objects with a single depletion sequence.</p>
+<a class="reference internal image-reference" href="../_images/scenario1.png"><img alt="../_images/scenario1.png" class="align-center" src="../_images/scenario1.png" style="width: 500px;" /></a>
 </div>
-<p>where, <code class="docutils literal notranslate"><span class="pre">dep1</span></code>, … are the depletion objects.
-Then, the  <code class="docutils literal notranslate"><span class="pre">weightedDep</span></code> can be post-processed.</p>
+<div class="section" id="scenario-2">
+<h4>Scenario 2:<a class="headerlink" href="#scenario-2" title="Permalink to this headline">¶</a></h4>
+<p>Multiple condition dependent (e.g., pressure and temperature) data objects with a single depletion sequence.</p>
+<a class="reference internal image-reference" href="../_images/scenario2.png"><img alt="../_images/scenario2.png" class="align-center" src="../_images/scenario2.png" style="width: 700px;" /></a>
+</div>
+<div class="section" id="scenario-3">
+<h4>Scenario 3:<a class="headerlink" href="#scenario-3" title="Permalink to this headline">¶</a></h4>
+<p>Multiple depletion sequences.</p>
+<a class="reference internal image-reference" href="../_images/scenario3.png"><img alt="../_images/scenario3.png" class="align-center" src="../_images/scenario3.png" style="width: 1000px;" /></a>
+</div>
 </div>
 <div class="section" id="description-of-stored-data">
 <h3>Description of Stored Data<a class="headerlink" href="#description-of-stored-data" title="Permalink to this headline">¶</a></h3>

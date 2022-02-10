@@ -21,28 +21,37 @@ perform a transmutation and/or decay simulation.
 		
 	2. :ref:`Execute depletion <deplete>`: set depletion or decay history, and solve the Bateman equations.
 	3. :ref:`Post-process results <postprocess>`: a dedicated container to store only result attributes, and methods to obtain specific values and plot results.
+	4. :ref:`Weight multiple depletion objects <weightdep>`: Volume weighted method to obtain a single depletion object with volume weighted fields. 
 
+Execution Flow Scenarios
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-Weighting Different Solutions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Scenario 1:
+~~~~~~~~~~~
 
-The user may want to solve multiple problems.
-Each problem can be set separately. However, all these individual problems are related as they could be part of a complete problem.
-For example, different components in the reactor-core.
-The user can combine this by applying the weighting method.
-The weighting method corrects according to volume.
+Multiple/Single time-dependent data objects with a single depletion sequence.
 
-**Example**
+.. image:: images/scenario1.png
+  :width: 500
+  :align: center
 
-.. code::
-	
-	from pyIsoDep.functions.weightdepletionobjects import WeightDepObjects
-	weightedDep = WeightDepObjects(dep1, dep2, dep3, ...)
+Scenario 2:
+~~~~~~~~~~~
+ 
+Multiple condition dependent (e.g., pressure and temperature) data objects with a single depletion sequence.
 
-where, ``dep1``, ... are the depletion objects.
-Then, the  ``weightedDep`` can be post-processed.
+.. image:: images/scenario2.png
+  :width: 700
+  :align: center
 
+Scenario 3:
+~~~~~~~~~~~
+ 
+Multiple depletion sequences.
 
+.. image:: images/scenario3.png
+  :width: 1000
+  :align: center
 	
 Description of Stored Data 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -89,7 +98,6 @@ Abstract Example
 	res.getvalues(...)
 	res.plot(...)
 
-	
 
 
 .. toctree::
@@ -104,6 +112,7 @@ Abstract Example
    postdepletion.rst
    resstorage.rst
    xsinterface.rst
+   WeightDepletions.rst
 
 
 	
