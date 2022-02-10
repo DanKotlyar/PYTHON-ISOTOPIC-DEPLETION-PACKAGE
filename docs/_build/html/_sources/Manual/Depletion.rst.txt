@@ -305,8 +305,8 @@ method				Method {"cram", "expm", "odeint"} used to solve the Bateman equations
 NoDepletion
 ^^^^^^^^^^^
 
-This function does nothing but obtaining the right cross sections
-Also, the function fixes the nuclide densities for all the time points.
+This function does nothing but obtaining the right cross sections.
+In addition, the function fixes the nuclide densities for all the time points.
 
 **Execution**:
   
