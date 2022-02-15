@@ -110,7 +110,7 @@ class Results:
                 else:
                     group.create_dataset(i, data=data, dtype=type(data))
             except:
-                pass
+                print("{} not exported to hdf5".format(i))
             
     def __exportXsSet(self, name, xslib, group):
         """function exports cross section data set to hdf5 file"""
@@ -197,7 +197,6 @@ class Results:
                 xs = f.create_group("xsData")
                 for i in list(self._xsDataSets.keys()):               
                     self.__exportXsSet(i, self._xsDataSets[i], xs)
-
 
     def plot(self, attribute, timeUnits="seconds",
              isotopes=None, xlabel=None, ylabel=None, norm=1,
@@ -316,7 +315,6 @@ class Results:
         plt.rc('axes', labelsize=fontsize)  # labels
         plt.rc('xtick', labelsize=fontsize)  # tick labels
         plt.rc('ytick', labelsize=fontsize)  # tick labels
-
 
     def __id2zai(self, Id):
         """converts Id into string ZAI name"""

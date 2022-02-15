@@ -34,5 +34,8 @@ def WeightDepObjects(*argv):
                 if idx > 0:
                     setvals += getattr(wgtDepObj, key)
                 setattr(wgtDepObj, key, setvals)
-
+    
+    #recaluclate keff and rho
+    wgtDepObj.keff = wgtDepObj.SIG_NSF / wgtDepObj.SIG_ABS
+    
     return wgtDepObj

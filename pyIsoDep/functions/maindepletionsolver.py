@@ -660,10 +660,11 @@ class MainDepletion:
             self.SIG_ABS[i] = (self.Nt[:, i] * abs_xs[:, i]).sum()
 
             self.keff[i] = self.SIG_NSF[i] / self.SIG_ABS[i]
-
+                                    
             # Total reactivity at the specific time point
-            self.Rho[i] = TO_PCM * (1 - 1/self.keff[i])
-
+            self.Rho[i] = TO_PCM * (1 - 1/self.keff[i])            
+            self.Rho[np.where(self.keff == 0.)[0]] = 0.
+            
             # Calculate the sensitivity of Nj to keff -> dkeff/dNj
             dkeff2dN = np.zeros(self.nIsotopes)
             for j in range(self.nIsotopes):
@@ -687,3 +688,5 @@ class MainDepletion:
         # Include the leakage probability
         self.keff = self.keff * nonLeakageP
         self.Rho = TO_PCM * (1 - 1/self.keff)
+        self.Rho[np.where(self.keff == 0.)[0]] = 0.
+        
