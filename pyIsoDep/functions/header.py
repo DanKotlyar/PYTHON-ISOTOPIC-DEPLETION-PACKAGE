@@ -1,13 +1,24 @@
 """header
 
 File to define basic parameters shared within the package.
+Defines:
+    - unit conversions
+    - cross section types
+    - priniting options
+    - required attributes for different containers within the package
 
-
+@authors: Dan Kotlyar & Matt Krecicki
 Created on Sat Oct 16 01:30:00 2021 @author: Dan Kotlyar
-Last updated on Thrus Oct 28 09:12:00 2021 @author: Matt Krecicki
+Last updated on Sun Feb 26 06:30:00 2021 @author: Dan Kotlyar
+
+List changes or additions:
+--------------------------
+"Concise description" - MM/DD/YYY - Name initials
+Expand the cross section dictionary ``IDX_XS`` - 02/26/2022 - DK
 
 """
 
+from pyIsoDep.functions.checkerrors import _compare2lists
 
 # -----------------------------------------------------------------------------
 #                      CONSTANTS
@@ -39,18 +50,29 @@ H5_PATH = "bgcore_data.h5"              # Pre-generated librray
 #                      DATA MANAGEMENT
 # -----------------------------------------------------------------------------
 # Storing indices
-IDX_XS = {"id": 0,     # ZAID of the isotope
-          "abs": 1,    # absorption
-          "f": 2,      # fission
-          "c": 3,      # radiative capture
-          "c2m": 4,    # capture that leads to metastable
-          "n2n": 5,    # n, 2n
-          "n3n": 6,    # n, 3n
-          "alpha": 7,  # n, alpha
-          "p": 8,      # n, proton
-          "d": 9,      # n, deutron
-          "t": 10}     # n, tritium
+IDX_XS = {"id": 0,       # ZAID of the isotope
+          "abs": 1,      # absorption
+          "f": 2,        # fission (MT=18/19)
+          "c": 3,        # radiative capture  (MT=102)
+          "c2m": 4,      # capture that leads to metastable
+          "n2n": 5,      # n, 2n (MT=16)
+          "n3n": 6,      # n, 3n (MT=17)
+          "a": 7,        # n, alpha (MT=107)
+          "p": 8,        # n, proton  (MT=103)
+          "d": 9,        # n, deutron (MT=104)
+          "t": 10,       # n, tritium (MT=105)
+          "na": 11,      # n, n+alpha (MT=22)
+          "np": 12,      # n, n+proton (MT=28)
+          "2a": 13,      # n, alpha+alpha (MT=108)
+          "t2a": 14,     # n, tritium+alpha+alpha (MT=113)
+          "a2n": 15,     # n, alpha+2n (MT=24)
+          }
 
+# Check that indices are ordered properly
+exp_idxList = [i for i in range(len(IDX_XS))]
+act_idxList = list(IDX_XS.values())
+_compare2lists(act_idxList, exp_idxList, "Actual idx for cross sections",
+               "Expected indices")
 # -----------------------------------------------------------------------------
 #                      PLOTTING
 # -----------------------------------------------------------------------------
