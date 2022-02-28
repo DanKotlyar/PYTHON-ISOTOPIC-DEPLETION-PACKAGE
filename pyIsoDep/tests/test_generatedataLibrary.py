@@ -12,7 +12,7 @@ Last updated on Sat Oct 16 00:30:00 2021 @author: Dan Kotlyar
 from pyIsoDep.functions.generatedata import TransmutationData
 
 # import pre-generated data containing set of cross sections
-from depletionPackage.tests.pregenerated_xs import ID, sig_c, sig_c2m,\
+from pyIsoDep.tests.pregenerated_xs import ID, sig_c, sig_c2m,\
     sig_n2n, sig_n3n, sig_f
 
 import timeit
