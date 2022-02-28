@@ -27,9 +27,9 @@ import numbers
 from pyIsoDep import setDataPath
 from pyIsoDep.functions.loaddecaydata import DecayData
 from pyIsoDep.functions.checkerrors import _exp2dshape, _is1darray,\
-    _isequallength, _isnonNegativeArray, _is2darray, _inrange
+    _isequallength, _isnonNegativeArray, _is2darray, _inrange, _inlist
 from pyIsoDep.functions.header import H5_PATH, BARN_2_CM2, JOULE_2MEV,\
-    IDX_XS, DATA_ATTR
+    IDX_XS, DATA_ATTR, XS_LIST
 
 
 NU_VAL = 2.5  # used for all isotopes (arbitrarily selected)
@@ -130,9 +130,11 @@ class TransmutationData:
             self.fymtx = None
             self.nu = None
 
-    def ReadData(self, ID, sig_f, sig_c, sig_c2m=None, sig_n2n=None,
-                 sig_n3n=None, sig_alpha=None, sig_p=None, sig_d=None,
-                 sig_t=None, fymtx=None, EfissMeV=None, BR=None, nu=None,
+    def ReadData(self, ID, sig_f=None, sig_c=None, sig_c2m=None, sig_n2n=None,
+                 sig_n3n=None, sig_a=None, sig_p=None, sig_d=None,
+                 sig_t=None, sig_na=None, sig_np=None, sig_2a=None,
+                 sig_t2a=None, sig_a2n=None,
+                 fymtx=None, EfissMeV=None, BR=None, nu=None,
                  decaymtx=None, flagBarns=True):
         """Read data and build the transmutation matrix
 
@@ -150,7 +152,7 @@ class TransmutationData:
             n, 2n in barns
         sig_n3n : 1-dim array
             n, 3n in barns
-        sig_alpha : 1-dim array
+        sig_a : 1-dim array
             (n, alpha) in barns
         sig_p : 1-dim array
             (n, proton) in barns
@@ -158,6 +160,16 @@ class TransmutationData:
             (n, deuterium) in barns
         sig_t : 1-dim array
             (n, tritium) in barns
+        sig_na : 1-dim array
+            (n, n+alpha) in barns
+        sig_np : 1-dim array
+            (n, n+p) in barns
+        sig_2a : 1-dim array
+            (n, 2alpha) in barns
+        sig_t2a : 1-dim array
+            (n, tritium+2alpha) in barns
+        sig_a2n : 1-dim array
+            (n, alpha+2n) in barns
         EfissMeV : 1-dim array
             fission energy in MeV for all the isotopes
         BR : 1-dim array
@@ -196,9 +208,12 @@ class TransmutationData:
         # store the 1-gr cross sections in a matrix
         # ---------------------------------------------------------------------
         xsData =\
-            self._storexs(ID, sig_f, sig_c, sig_c2m, sig_n2n, sig_n3n,
-                          sig_alpha, sig_p, sig_d, sig_t, fymtx, EfissMeV, BR,
-                          nu, decaymtx, flagBarns)
+            self._storexs(ID, EfissMeV, BR, nu, decaymtx, flagBarns, fymtx,
+                          sig_f=sig_f, sig_c=sig_c, sig_c2m=sig_c2m,
+                          sig_n2n=sig_n2n, sig_n3n=sig_n3n, sig_a=sig_a,
+                          sig_p=sig_p, sig_d=sig_d, sig_t=sig_t, sig_na=sig_na,
+                          sig_np=sig_np, sig_2a=sig_2a, sig_t2a=sig_t2a,
+                          sig_a2n=sig_a2n)
 
         # For each parent define the products for all the possible reactions
         # e.g. 922350 absorbs a neutron and leads to 922360
@@ -213,10 +228,16 @@ class TransmutationData:
         prodcutsIDs[:, IDX_XS["c2m"]-idxC] = parents + 11  # n,c - meta
         prodcutsIDs[:, IDX_XS["n2n"]-idxC] = parents - 10  # n,2n
         prodcutsIDs[:, IDX_XS["n3n"]-idxC] = parents - 20  # n,3n
-        prodcutsIDs[:, IDX_XS["alpha"]-idxC] = parents - 20030  # alpha
+        prodcutsIDs[:, IDX_XS["a"]-idxC] = parents - 20030  # alpha
         prodcutsIDs[:, IDX_XS["p"]-idxC] = parents - 10000  # proton
         prodcutsIDs[:, IDX_XS["d"]-idxC] = parents - 10010  # deuteron
         prodcutsIDs[:, IDX_XS["t"]-idxC] = parents - 10020  # tritium
+        prodcutsIDs[:, IDX_XS["na"]-idxC] = parents - 20040  # n+alpha
+        prodcutsIDs[:, IDX_XS["np"]-idxC] = parents - 10010  # n+proton
+        prodcutsIDs[:, IDX_XS["2a"]-idxC] = parents - 40070  # alpha+alpha
+        prodcutsIDs[:, IDX_XS["t2a"]-idxC] = parents - 50100  # tritium+2alpha
+        prodcutsIDs[:, IDX_XS["a2n"]-idxC] = parents - 20050  # alpha+2n
+
         prodcutsIDs[prodcutsIDs < 100] = 0
 
         # Create the 1-g transmutation matrix (without fission components)
@@ -291,16 +312,18 @@ class TransmutationData:
         if not attrFlag:
             raise ValueError("No attributes at all within the class")
 
-    def _storexs(self, ID, sig_f, sig_c, sigc2m, sig_n2n, sig_n3n,
-                 sig_alpha, sig_p, sig_d, sig_t, fymtx, EfissMeV, BR, nu,
-                 decaymtx, flagBarns):
+    def _storexs(self, ID, EfissMeV, BR, nu, decaymtx,
+                 flagBarns, fymtx, **kwargs):
         """store all the cross section in a specific format"""
 
+        nIsotopes = len(ID)  # number of isotopes
         # get all the cross sections in a single matrix (includes IDs)
+        xsDataPart = _checkxs(nIsotopes, flagBarns, BR=None, **kwargs)
+        xsDataPart[:, 0] = ID
+
         # get the fission energy, fission yields matrix, and decay matrix
-        xsDataPart, EfissMeVPart, fymtxPart, decaymtxPart, nuPart = _checkxs(
-            ID, sig_f, sig_c, sigc2m, sig_n2n, sig_n3n, sig_alpha, sig_p,
-            sig_d, sig_t, fymtx, EfissMeV, BR, nu, decaymtx, flagBarns)
+        EfissMeVPart, fymtxPart, decaymtxPart, nuPart =\
+            _checkmtx(ID, fymtx, decaymtx, EfissMeV, nu)
 
         # External data library is not provided
         if not self.libraryFlag:
@@ -367,85 +390,57 @@ class TransmutationData:
 # -----------------------------------------------------------------------------
 # Supplementary functions to check errors
 # -----------------------------------------------------------------------------
-def _checkxs(ID, sig_f, sig_c, sigc2m, sig_n2n, sig_n3n, sig_alpha, sig_p,
-             sig_d, sig_t, fymtx, EfissMeV, BR, nu, decaymtx, flagBarns):
+def _checkxs(nIsotopes, flagBarns, BR=None, **kwargs):
     """check that all the cross sections are properly provided"""
+
+    # builds xs data matrix to store all the cross sections
+    xsData = np.zeros((nIsotopes, len(IDX_XS)))
+
+    for key, value in kwargs.items():
+        _inlist(key, "Cross section type", XS_LIST)
+        if value is None:
+            value = np.zeros(nIsotopes)
+        # convert to an array
+        value = np.array(value)
+        # check if all variables are 1-dim arrays
+        _is1darray(value, key)
+        # check that all variables are with the same size
+        _isequallength(value, nIsotopes, key)
+        # no negative values should be included
+        _isnonNegativeArray(value, key)
+        # Assign data
+        xsData[:, IDX_XS[key[4:]]] = value
+
+    if BR is not None:
+        xsData[:, IDX_XS["c2m"]] = xsData[:, IDX_XS["c"]] * BR
+        xsData[:, IDX_XS["c"]] = xsData[:, IDX_XS["c"]] * (1 - BR)
+
+    # create the absorption cross section by summing over all the reactions
+    xsData[:, IDX_XS["abs"]] = xsData[:, IDX_XS["abs"]+1::].sum(axis=1)
+
+    if flagBarns:
+        convUnits = BARN_2_CM2
+    else:
+        convUnits = 1.0
+
+    xsData[:, IDX_XS["abs"]::] *= convUnits
+
+    return xsData
+
+
+def _checkmtx(ID, fymtx, decaymtx, EfissMeV, nu):
+    """check that data that is not xs is properly provided"""
 
     _is1darray(ID, "Nuclides Ids")
     numN = len(np.unique(ID))  # number of unique isotopes
     _isequallength(ID, numN, "Nuclides Ids")
     ID = np.array(ID, dtype=int)
-    if sig_c is None:
-        sig_c = np.zeros(numN)
-    else:
-        sig_c = np.array(sig_c)
-
-    if sigc2m is None:
-        sigc2m = np.zeros(numN)
-    else:
-        sigc2m = np.array(sigc2m)
-
-    if sig_n2n is None:
-        sig_n2n = np.zeros(numN)
-    else:
-        sig_n2n = np.array(sig_n2n)
-
-    if sig_n3n is None:
-        sig_n3n = np.zeros(numN)
-    else:
-        sig_n3n = np.array(sig_n3n)
-
-    if sig_f is None:
-        sig_f = np.zeros(numN)
-    else:
-        sig_f = np.array(sig_f)
-
-    if sig_alpha is None:
-        sig_alpha = np.zeros(numN)
-    else:
-        sig_alpha = np.array(sig_alpha)
-
-    if sig_p is None:
-        sig_p = np.zeros(numN)
-    else:
-        sig_p = np.array(sig_p)
-
-    if sig_d is None:
-        sig_d = np.zeros(numN)
-    else:
-        sig_d = np.array(sig_d)
-
-    if sig_t is None:
-        sig_t = np.zeros(numN)
-    else:
-        sig_t = np.array(sig_t)
 
     if EfissMeV is None:
         EfissMeV = _FissionEnergy(ID)
     else:
         EfissMeV = np.array(EfissMeV, dtype=float)
 
-    if BR is not None:
-        BR = np.array(BR)
-
-    if nu is not None:
-        nu = np.array(nu)
-
-    # check if all variables are 1-dim arrays
-    _is1darray(sig_c, "Capture XS")
-    _is1darray(sigc2m, "Capture to metastable XS")
-    _is1darray(sig_n2n, "(n, 2n) XS")
-    _is1darray(sig_n3n, "(n, 3n) XS")
-    _is1darray(sig_f, "(n, fission) XS")
-    _is1darray(sig_alpha, "(n, alpha) XS")
-    _is1darray(sig_p, "(n, proton) XS")
-    _is1darray(sig_d, "(n, deutron) XS")
-    _is1darray(sig_t, "(n, tritium) XS")
-    _is1darray(EfissMeV, "Fission energy in MeV")
-    if nu is not None:
-        _is1darray(nu, "Number of neutrons emitted per fission")
-    if BR is not None:
-        _is1darray(BR, "Branching ratios")
     if fymtx is not None:
         fymtx = np.array(fymtx)
         _is2darray(fymtx, "Fission yields matrix")
@@ -453,72 +448,26 @@ def _checkxs(ID, sig_f, sig_c, sigc2m, sig_n2n, sig_n3n, sig_alpha, sig_p,
         decaymtx = np.array(decaymtx)
         _is2darray(decaymtx, "Decay matrix")
 
+    if nu is not None:
+        nu = np.array(nu)
+
     # check that all variables are with the same size
-    _isequallength(sig_c, numN, "Capture XS")
-    _isequallength(sigc2m, numN, "Capture to metastable XS")
-    _isequallength(sig_n2n, numN, "(n, 2n) XS")
-    _isequallength(sig_n3n, numN, "(n, 3n) XS")
-    _isequallength(sig_f, numN, "(n, fission) XS")
-    _isequallength(sig_alpha, numN, "(n, alpha) XS")
-    _isequallength(sig_p, numN, "(n, proton) XS")
-    _isequallength(sig_d, numN, "(n, deutron) XS")
-    _isequallength(sig_t, numN, "(n, tritium) XS")
     _isequallength(EfissMeV, numN, "Fission energy in MeV")
     if nu is not None:
-        _isequallength(nu, numN, "Number of neutrons emitted per fission")
-    if BR is not None:
-        _isequallength(BR, numN, "Branching ratios")
+        _is1darray(nu, "Number of neutrons emitted per fission")
     if fymtx is not None:
         _exp2dshape(fymtx, (numN, numN), "Fission yields matrix")
     if decaymtx is not None:
         _exp2dshape(decaymtx, (numN, numN), "Decay matrix")
 
     # check if all variables do not contain negative values
-    _isnonNegativeArray(sig_c, "Capture XS")
-    _isnonNegativeArray(sigc2m, "Capture to metastable XS")
-    _isnonNegativeArray(sig_n2n, "(n, 2n) XS")
-    _isnonNegativeArray(sig_n3n, "(n, 3n) XS")
-    _isnonNegativeArray(sig_f, "(n, fission) XS")
-    _isnonNegativeArray(sig_alpha, "(n, alpha) XS")
-    _isnonNegativeArray(sig_p, "(n, proton) XS")
-    _isnonNegativeArray(sig_d, "(n, deutron) XS")
-    _isnonNegativeArray(sig_t, "(n, tritium) XS")
     _isnonNegativeArray(EfissMeV, "Fission energy in MeV")
     if nu is not None:
         _isnonNegativeArray(nu, "Number of neutrons emitted per fission")
-    if BR is not None:
-        _isnonNegativeArray(BR, "Branching ratios")
     if fymtx is not None:
         _isnonNegativeArray(fymtx, "Fission yields matrix")
 
-    # builds xs data matrix to store all the cross sections
-    xsData = np.zeros((numN, len(IDX_XS)))
-    # Absorption cross section
-    sig_abs = sig_c + sigc2m + sig_n2n + sig_n3n + sig_f + sig_alpha + sig_p +\
-        sig_d + sig_t
-
-    if flagBarns:
-        convUnits = BARN_2_CM2
-    else:
-        convUnits = 1.0
-
-    xsData[:, IDX_XS["id"]] = ID
-    xsData[:, IDX_XS["abs"]] = sig_abs * convUnits
-    xsData[:, IDX_XS["c"]] = sig_c * convUnits
-    xsData[:, IDX_XS["c2m"]] = sigc2m * convUnits
-    xsData[:, IDX_XS["n2n"]] = sig_n2n * convUnits
-    xsData[:, IDX_XS["n3n"]] = sig_n3n * convUnits
-    xsData[:, IDX_XS["f"]] = sig_f * convUnits
-    xsData[:, IDX_XS["alpha"]] = sig_alpha * convUnits
-    xsData[:, IDX_XS["p"]] = sig_p * convUnits
-    xsData[:, IDX_XS["d"]] = sig_d * convUnits
-    xsData[:, IDX_XS["t"]] = sig_t * convUnits
-
-    if BR is not None:
-        xsData[:, IDX_XS["c2m"]] = sig_c * BR
-        xsData[:, IDX_XS["c"]] = sig_c * (1 - BR)
-
-    return xsData, EfissMeV, fymtx, decaymtx, nu
+    return EfissMeV, fymtx, decaymtx, nu
 
 
 # Obtain the energy per fission for the defined isotopes
@@ -534,3 +483,158 @@ def _FissionEnergy(ID):
     energyFissMeV[idxNonFiss] = 0.0
 
     return energyFissMeV
+
+
+# Functions to be deleted
+# def _checkxsOLD(ID, sig_f, sig_c, sigc2m, sig_n2n, sig_n3n, sig_a, sig_p,
+#                 sig_d, sig_t, fymtx, EfissMeV, BR, nu, decaymtx, flagBarns):
+#     """check that all the cross sections are properly provided"""
+
+#     _is1darray(ID, "Nuclides Ids")
+#     numN = len(np.unique(ID))  # number of unique isotopes
+#     _isequallength(ID, numN, "Nuclides Ids")
+#     ID = np.array(ID, dtype=int)
+#     if sig_c is None:
+#         sig_c = np.zeros(numN)
+#     else:
+#         sig_c = np.array(sig_c)
+
+#     if sigc2m is None:
+#         sigc2m = np.zeros(numN)
+#     else:
+#         sigc2m = np.array(sigc2m)
+
+#     if sig_n2n is None:
+#         sig_n2n = np.zeros(numN)
+#     else:
+#         sig_n2n = np.array(sig_n2n)
+
+#     if sig_n3n is None:
+#         sig_n3n = np.zeros(numN)
+#     else:
+#         sig_n3n = np.array(sig_n3n)
+
+#     if sig_f is None:
+#         sig_f = np.zeros(numN)
+#     else:
+#         sig_f = np.array(sig_f)
+
+#     if sig_a is None:
+#         sig_a = np.zeros(numN)
+#     else:
+#         sig_a = np.array(sig_a)
+
+#     if sig_p is None:
+#         sig_p = np.zeros(numN)
+#     else:
+#         sig_p = np.array(sig_p)
+
+#     if sig_d is None:
+#         sig_d = np.zeros(numN)
+#     else:
+#         sig_d = np.array(sig_d)
+
+#     if sig_t is None:
+#         sig_t = np.zeros(numN)
+#     else:
+#         sig_t = np.array(sig_t)
+
+#     if EfissMeV is None:
+#         EfissMeV = _FissionEnergy(ID)
+#     else:
+#         EfissMeV = np.array(EfissMeV, dtype=float)
+
+#     if BR is not None:
+#         BR = np.array(BR)
+
+#     if nu is not None:
+#         nu = np.array(nu)
+
+#     # check if all variables are 1-dim arrays
+#     _is1darray(sig_c, "Capture XS")
+#     _is1darray(sigc2m, "Capture to metastable XS")
+#     _is1darray(sig_n2n, "(n, 2n) XS")
+#     _is1darray(sig_n3n, "(n, 3n) XS")
+#     _is1darray(sig_f, "(n, fission) XS")
+#     _is1darray(sig_a, "(n, alpha) XS")
+#     _is1darray(sig_p, "(n, proton) XS")
+#     _is1darray(sig_d, "(n, deutron) XS")
+#     _is1darray(sig_t, "(n, tritium) XS")
+#     _is1darray(EfissMeV, "Fission energy in MeV")
+#     if nu is not None:
+#         _is1darray(nu, "Number of neutrons emitted per fission")
+#     if BR is not None:
+#         _is1darray(BR, "Branching ratios")
+#     if fymtx is not None:
+#         fymtx = np.array(fymtx)
+#         _is2darray(fymtx, "Fission yields matrix")
+#     if decaymtx is not None:
+#         decaymtx = np.array(decaymtx)
+#         _is2darray(decaymtx, "Decay matrix")
+
+#     # check that all variables are with the same size
+#     _isequallength(sig_c, numN, "Capture XS")
+#     _isequallength(sigc2m, numN, "Capture to metastable XS")
+#     _isequallength(sig_n2n, numN, "(n, 2n) XS")
+#     _isequallength(sig_n3n, numN, "(n, 3n) XS")
+#     _isequallength(sig_f, numN, "(n, fission) XS")
+#     _isequallength(sig_a, numN, "(n, alpha) XS")
+#     _isequallength(sig_p, numN, "(n, proton) XS")
+#     _isequallength(sig_d, numN, "(n, deutron) XS")
+#     _isequallength(sig_t, numN, "(n, tritium) XS")
+#     _isequallength(EfissMeV, numN, "Fission energy in MeV")
+#     if nu is not None:
+#         _isequallength(nu, numN, "Number of neutrons emitted per fission")
+#     if BR is not None:
+#         _isequallength(BR, numN, "Branching ratios")
+#     if fymtx is not None:
+#         _exp2dshape(fymtx, (numN, numN), "Fission yields matrix")
+#     if decaymtx is not None:
+#         _exp2dshape(decaymtx, (numN, numN), "Decay matrix")
+
+#     # check if all variables do not contain negative values
+#     _isnonNegativeArray(sig_c, "Capture XS")
+#     _isnonNegativeArray(sigc2m, "Capture to metastable XS")
+#     _isnonNegativeArray(sig_n2n, "(n, 2n) XS")
+#     _isnonNegativeArray(sig_n3n, "(n, 3n) XS")
+#     _isnonNegativeArray(sig_f, "(n, fission) XS")
+#     _isnonNegativeArray(sig_a, "(n, alpha) XS")
+#     _isnonNegativeArray(sig_p, "(n, proton) XS")
+#     _isnonNegativeArray(sig_d, "(n, deutron) XS")
+#     _isnonNegativeArray(sig_t, "(n, tritium) XS")
+#     _isnonNegativeArray(EfissMeV, "Fission energy in MeV")
+#     if nu is not None:
+#         _isnonNegativeArray(nu, "Number of neutrons emitted per fission")
+#     if BR is not None:
+#         _isnonNegativeArray(BR, "Branching ratios")
+#     if fymtx is not None:
+#         _isnonNegativeArray(fymtx, "Fission yields matrix")
+
+#     # builds xs data matrix to store all the cross sections
+#     xsData = np.zeros((numN, len(IDX_XS)))
+#     # Absorption cross section
+#     sig_abs = sig_c + sigc2m + sig_n2n + sig_n3n + sig_f + sig_a + sig_p +\
+#         sig_d + sig_t
+
+#     if flagBarns:
+#         convUnits = BARN_2_CM2
+#     else:
+#         convUnits = 1.0
+
+#     xsData[:, IDX_XS["id"]] = ID
+#     xsData[:, IDX_XS["abs"]] = sig_abs * convUnits
+#     xsData[:, IDX_XS["c"]] = sig_c * convUnits
+#     xsData[:, IDX_XS["c2m"]] = sigc2m * convUnits
+#     xsData[:, IDX_XS["n2n"]] = sig_n2n * convUnits
+#     xsData[:, IDX_XS["n3n"]] = sig_n3n * convUnits
+#     xsData[:, IDX_XS["f"]] = sig_f * convUnits
+#     xsData[:, IDX_XS["a"]] = sig_a * convUnits
+#     xsData[:, IDX_XS["p"]] = sig_p * convUnits
+#     xsData[:, IDX_XS["d"]] = sig_d * convUnits
+#     xsData[:, IDX_XS["t"]] = sig_t * convUnits
+
+#     if BR is not None:
+#         xsData[:, IDX_XS["c2m"]] = sig_c * BR
+#         xsData[:, IDX_XS["c"]] = sig_c * (1 - BR)
+
+#     return xsData, EfissMeV, fymtx, decaymtx, nu

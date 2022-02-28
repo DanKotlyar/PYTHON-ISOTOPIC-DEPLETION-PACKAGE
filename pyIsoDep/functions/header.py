@@ -68,6 +68,8 @@ IDX_XS = {"id": 0,       # ZAID of the isotope
           "a2n": 15,     # n, alpha+2n (MT=24)
           }
 
+XS_LIST = ["sig_"+xstype for xstype in IDX_XS.keys() if
+           (xstype != "id" and xstype != "abs")]
 # Check that indices are ordered properly
 exp_idxList = [i for i in range(len(IDX_XS))]
 act_idxList = list(IDX_XS.values())
